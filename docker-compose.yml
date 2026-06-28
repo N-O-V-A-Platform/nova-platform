@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: nova_db
+    environment:
+      POSTGRES_DB: nova_db
+      POSTGRES_USER: nova_user
+      POSTGRES_PASSWORD: nova_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nova_user -d nova_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nova_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nova_backend
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-db6q!%a=b=9fpdb9w#&*b^dhfgiy(bn_0x2lod6=ot5*9gd19n
+      - DATABASE_URL=postgresql+asyncpg://nova_user:nova_password@db:5432/nova_db
+      - REDIS_URL=redis://redis:6379/1
+      - ALLOWED_HOSTS=*
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nova_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
