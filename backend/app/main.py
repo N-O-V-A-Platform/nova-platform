@@ -1,9 +1,9 @@
 from fastapi import FastAPI
+from app.core.config import settings
 
 app = FastAPI(
-    title="N.O.V.A API",
-    version="1.0.0",
-    description="Next-generation Operational Virtual Academic Assistant"
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
 )
 
 @app.get("/")
