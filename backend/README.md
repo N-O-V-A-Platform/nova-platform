@@ -1,6 +1,45 @@
 # N.O.V.A Learning Platform Backend
 
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
 This repository contains the backend codebase for the N.O.V.A learning platform. It is built as a high-performance, asynchronous REST API using Python and the FastAPI framework.
+
+---
+
+## Features
+
+- JWT Authentication
+- Google OAuth Login
+- Multi-institution support
+- Role-Based Access Control (RBAC)
+- AI Tutor Integration
+- Retrieval-Augmented Generation (RAG)
+- Quiz Generation
+- Student Skill Passport
+- Digital Certificates
+- Workflow Automation
+- Analytics Dashboard
+- Notification System
+
+---
+
+## Architectural Diagram
+
+```mermaid
+flowchart LR
+
+Frontend --> FastAPI
+FastAPI --> PostgreSQL
+FastAPI --> Redis
+FastAPI --> Pinecone
+FastAPI --> OpenAI
+FastAPI --> Gemini
+FastAPI --> Groq
+```
 
 ---
 
@@ -20,6 +59,16 @@ The database schema consists of several integrated subsystems:
 
 ---
 
+## Security Features
+
+- **JWT Authentication**: Secure stateless token-based authorization.
+- **Password Cryptography**: Secure password hashing using Passlib with the bcrypt backend.
+- **Google OAuth 2.0**: Integrated social authentication with automated domain-to-institution linking.
+- **Role-Based Access Control (RBAC)**: Fine-grained user access control based on roles and permissions.
+- **Secrets Management**: Configuration securely parsed via Pydantic Settings using decoupled environment variables.
+
+---
+
 ## Technology Stack
 
 The service utilizes the following technologies:
@@ -30,7 +79,7 @@ The service utilizes the following technologies:
 - **Caching & Brokering**: Redis 7 for cache management and rate-limiting.
 - **Vector Storage**: Pinecone for semantic searching and Retrieval-Augmented Generation (RAG).
 - **AI Providers**: OpenAI, Google Generative AI (Gemini), and Groq for conversational capabilities and quiz generation.
-- **Security**: Passlib and bcrypt (pinned to 4.0.1 for library compatibility) for password hashing; python-jose for JWT signatures.
+- **Security**: Passlib and bcrypt for secure password hashing; python-jose for JWT signatures.
 
 ---
 
@@ -47,11 +96,11 @@ backend/
 │   ├── core/                 # Global configuration and settings parsing
 │   ├── db/                   # Database session setup, declarative base, and mixins
 │   ├── models/               # SQLAlchemy models (mapped classes)
-│   ├── schemas/              # Pydantic schemas for data serialization and validation
-│   └── tests/                # Unit and integration test suite
+│   └── schemas/              # Pydantic schemas for data serialization and validation
 ├── requirements/             # Dependency lists
 │   ├── base.txt              # Production and core dependencies
 │   └── local.txt             # Development and testing dependencies
+├── tests/                    # Unit and integration test suite
 ├── Dockerfile                # Production container definition
 ├── pyproject.toml            # Project tool configurations (Black, Pytest, Isort)
 ├── alembic.ini               # Alembic configuration file
@@ -72,7 +121,7 @@ Ensure the following variables are configured:
 | `APP_VERSION` | Current application version | `1.0.0` |
 | `DEBUG` | Enable debugger mode and stacktraces | `True` |
 | `API_V1_STR` | Global path prefix for version 1 endpoints | `/api/v1` |
-| `DATABASE_URL` | SQLAlchemy connection string | `postgresql+asyncpg://postgres:postgres@db:5432/nova` |
+| `DATABASE_URL` | SQLAlchemy connection string | `postgresql+asyncpg://nova_user:nova_password@db:5432/nova_db` |
 | `REDIS_URL` | Redis instance connection URL | `redis://redis:6379/0` |
 | `JWT_SECRET_KEY` | Secret key used to sign JWT access tokens | (Required) |
 | `JWT_ALGORITHM` | Hashing algorithm for signature | `HS256` |
@@ -100,7 +149,7 @@ Ensure the following variables are configured:
    docker compose up -d
    ```
 
-3. View live execution logs:
+3. View live execution logs (where `backend` is the service name defined in `docker-compose.yml`):
    ```bash
    docker compose logs -f backend
    ```
@@ -168,7 +217,7 @@ Once the backend is running, automatic interactive documentation is available:
 
 ### Principal Routes
 - **Authentication**: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/google`, `GET /api/v1/auth/me`
-- **Health Check**: `GET /health`
+- **Health Check (unversioned)**: `GET /health`
 
 ---
 
@@ -179,6 +228,11 @@ The application uses `pytest` for automated unit and integration tests, alongsid
 - **Run Automated Tests**:
   ```bash
   docker compose exec backend pytest
+  ```
+
+- **Run Tests with Coverage**:
+  ```bash
+  docker compose exec backend pytest --cov=app
   ```
 
 - **Code Formatting and Linting**:
