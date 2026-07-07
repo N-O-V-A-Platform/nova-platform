@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -221,4 +222,21 @@ async def google_auth(payload: GoogleAuthRequest, db: AsyncSession = Depends(get
         access_token=access_token,
         refresh_token=refresh_token,
         user=user_response
+    )
+
+from app.auth.dependencies import get_current_user
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+):
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        role_name=current_user.role.name if current_user.role else None,
+        institution_id=current_user.institution_id,
+        status=current_user.status,
     )

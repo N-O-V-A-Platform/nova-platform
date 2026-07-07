@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import TokenPayload
 
+
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"
 )
@@ -22,7 +23,9 @@ async def get_current_user(
 ) -> User:
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
         )
         token_data = TokenPayload(**payload)
     except (JWTError, ValidationError):

@@ -1,14 +1,3 @@
-from functools import lru_cache
-
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
-class Settings(BaseSettings):
-    """
-    Application configuration loaded from environment variables.
-    """
-
 import os
 from functools import lru_cache
 
@@ -26,47 +15,23 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-
-    # --------------------------------------------------
-    # Application
-    # --------------------------------------------------
-
     APP_NAME: str = "N.O.V.A API"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
-
-    # --------------------------------------------------
-    # Database
-    # --------------------------------------------------
+    API_V1_STR: str = "/api/v1"
 
     DATABASE_URL: str = Field(
-        default="postgresql+psycopg://postgres:postgres@db:5432/nova"
+        default="postgresql+asyncpg://postgres:postgres@db:5432/nova"
     )
 
-    # --------------------------------------------------
-    # Redis
-    # --------------------------------------------------
-
     REDIS_URL: str = "redis://redis:6379/0"
-
-    # --------------------------------------------------
-    # Authentication
-    # --------------------------------------------------
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # --------------------------------------------------
-    # Google OAuth
-    # --------------------------------------------------
-
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-
-    # --------------------------------------------------
-    # AI Providers
-    # --------------------------------------------------
 
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""

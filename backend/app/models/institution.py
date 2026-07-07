@@ -1,9 +1,14 @@
-from sqlalchemy import Boolean, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, String, Text, ForeignKey, DateTime
+import uuid
+from datetime import datetime
+from typing import List, TYPE_CHECKING
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import TimestampMixin, UUIDMixin
-
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.course import Course
 
 class Institution(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "institutions"
@@ -67,3 +72,45 @@ class Institution(Base, UUIDMixin, TimestampMixin):
         Boolean,
         default=True,
     )
+
+    users: Mapped[List["User"]] = relationship(
+        back_populates="institution"
+    )
+
+    departments: Mapped[List["Department"]] = relationship(
+        back_populates="institution",
+        cascade="all, delete-orphan"
+    )
+
+class Department(Base, UUIDMixin):
+    __tablename__ = "departments"
+
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+    code: Mapped[str] = mapped_column(
+        String(50),
+        unique=True,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+    # Relationships
+    institution: Mapped["Institution"] = relationship(
+        back_populates="departments"
+    )
+    courses: Mapped[List["Course"]] = relationship(
+        back_populates="department",
+        cascade="all, delete-orphan"
+    )
+
+
+    

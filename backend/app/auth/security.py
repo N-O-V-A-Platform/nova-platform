@@ -12,7 +12,7 @@ pwd_context = CryptContext(
 )
 
 
-def hash_password(password: str) -> str:
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
@@ -28,6 +28,10 @@ def verify_password(
 
 def create_access_token(
     subject: str,
+    role: str,
+    institution_id: Optional[str] = None,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
     expires_delta: Optional[timedelta] = None,
 ):
     if expires_delta:
@@ -39,6 +43,27 @@ def create_access_token(
 
     payload = {
         "sub": subject,
+        "role": role,
+        "institution_id": institution_id,
+        "first_name": first_name,
+        "last_name": last_name,
+        "exp": expire,
+    }
+
+    return jwt.encode(
+        payload,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+def create_refresh_token(
+    subject: str,
+):
+    expire = datetime.now(timezone.utc) + timedelta(days=7)
+
+    payload = {
+        "sub": subject,
+        "type": "refresh",
         "exp": expire,
     }
 
