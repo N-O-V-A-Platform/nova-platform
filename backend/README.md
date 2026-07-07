@@ -10,35 +10,48 @@ This repository contains the backend codebase for the N.O.V.A learning platform.
 
 ---
 
+## Project Status
+
+Active Development
+
+Current Milestone: Backend Foundation and Authentication Complete
+
+---
+
 ## Features
 
-- JWT Authentication
-- Google OAuth Login
-- Multi-institution support
-- Role-Based Access Control (RBAC)
-- AI Tutor Integration
-- Retrieval-Augmented Generation (RAG)
-- Quiz Generation
-- Student Skill Passport
-- Digital Certificates
-- Workflow Automation
-- Analytics Dashboard
-- Notification System
+### Current Features
+- **User Authentication**: Secure signup, login, and token generation.
+- **Google OAuth Login**: Direct authentication utilizing Google sign-in.
+- **Role-Based Access Control**: Domain access verification for Admins, Lecturers, and Students.
+- **Multi-Institution Support**: Logical isolation of database records based on institutions and departments.
+- **Asynchronous Architecture**: Non-blocking database transactions and endpoint handlers.
+- **Interactive Documentation**: Automatic API specs served dynamically via Swagger and ReDoc.
+
+### Planned Features
+- **AI Tutor Integration**: Real-time conversational AI tutors assigned to courses.
+- **Retriewval-Augmented Generation (RAG)**: Context-aware document querying using semantic vectors.
+- **Quiz Generation**: AI-driven quiz creation and scoring mechanisms.
+- **Student Skill Passport**: Automated skill profile verification and badges.
+- **Digital Certificates**: Generation and verification of digital course credentials.
+- **Workflow Automation**: Trigger-based administrative actions and notifications.
+- **Analytics Dashboard**: Comprehensive reports on course performance and learner telemetry.
 
 ---
 
 ## Architectural Diagram
 
 ```mermaid
-flowchart LR
-
-Frontend --> FastAPI
-FastAPI --> PostgreSQL
-FastAPI --> Redis
-FastAPI --> Pinecone
-FastAPI --> OpenAI
-FastAPI --> Gemini
-FastAPI --> Groq
+flowchart TD
+    Client[Client Browser / App] -->|HTTPS| FastAPI[FastAPI REST API]
+    FastAPI -->|JWT Validation| Auth[Auth / Security Middleware]
+    FastAPI -->|Async Session| DB[(PostgreSQL Database)]
+    FastAPI -->|Rate-Limiting / Cache| Cache[(Redis Cache)]
+    FastAPI -->|Embedding Queries| Pinecone[(Pinecone Vector DB)]
+    FastAPI -->|LLM Inference| AIProviders{AI Engine / API Providers}
+    AIProviders --> OpenAI[OpenAI API]
+    AIProviders --> Gemini[Gemini API]
+    AIProviders --> Groq[Groq API]
 ```
 
 ---
@@ -66,6 +79,16 @@ The database schema consists of several integrated subsystems:
 - **Google OAuth 2.0**: Integrated social authentication with automated domain-to-institution linking.
 - **Role-Based Access Control (RBAC)**: Fine-grained user access control based on roles and permissions.
 - **Secrets Management**: Configuration securely parsed via Pydantic Settings using decoupled environment variables.
+
+---
+
+## API Design
+
+- **RESTful Endpoints**: Predictable, resource-oriented URL patterns and HTTP methods.
+- **Data Serialization**: JSON-formatted payloads for all requests and responses.
+- **Authorization**: Bearer token authentication via the HTTP `Authorization` header.
+- **Dynamic Spec Generation**: OpenAPI specifications generated automatically.
+- **Request Validation**: Automatic schema enforcement using Pydantic.
 
 ---
 
@@ -241,3 +264,16 @@ The application uses `pytest` for automated unit and integration tests, alongsid
   black app/
   isort app/
   ```
+
+---
+
+## Contributing
+
+Contributions, bug reports, and feature suggestions are welcome.
+Please open an issue before submitting large changes.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](../LICENSE) file in the repository root for details.
