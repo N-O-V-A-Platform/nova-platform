@@ -80,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authService.login(credentials);
       setUser(res.user);
+      setLoading(false);
       
       // Redirect based on role
       if (res.user.role_name === "Admin") {
@@ -100,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authService.register(data);
       setUser(res.user);
+      setLoading(false);
       
       // Redirect based on role
       if (res.user.role_name === "Admin") {
@@ -120,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authService.googleAuth(credential);
       setUser(res.user);
+      setLoading(false);
       
       // Redirect based on role
       if (res.user.role_name === "Admin") {
