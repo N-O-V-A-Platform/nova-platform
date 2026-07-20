@@ -1,26 +1,331 @@
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Patrick+Hand&family=Caveat:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FAF6EE;
+  --foreground: #1A1A1A;
+  --primary: #E75A3D;
+  --primary-hover: #D5492C;
+  --secondary: #3B82F6;
+  --highlighter-yellow: #FEF08A;
+  --canvas-card: #FFFFFF;
+  --border-color: #1A1A1A;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #153229; /* Chalkboard Green */
+  --foreground: #F5FAFA; /* Chalk White */
+  --primary: #F4D03F; /* Chalk Yellow */
+  --primary-hover: #D4AC0D;
+  --secondary: #60A5FA;
+  --highlighter-yellow: rgba(244, 208, 63, 0.25);
+  --canvas-card: #1D4337; /* Card slate green */
+  --border-color: #FFFFFF;
 }
 
 body {
   background: var(--background);
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Patrick Hand', 'Inter', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+input, select, textarea, button {
+  font-family: 'Patrick Hand', 'Inter', sans-serif;
+}
+
+.dark body {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Doodle Animations */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes glide {
+  0% { transform: translate(0px, 0px) rotate(0deg); }
+  50% { transform: translate(12px, -12px) rotate(-2deg); }
+  100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 0.15; }
+  45% { opacity: 0.15; }
+  50% { opacity: 0.45; }
+  52% { opacity: 0.15; }
+  54% { opacity: 0.55; }
+  56% { opacity: 0.15; }
+  90% { opacity: 0.55; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glide {
+  animation: glide 8s ease-in-out infinite;
+}
+
+.animate-flicker {
+  animation: flicker 5s ease-in-out infinite;
+}
+
+@keyframes propeller-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-propeller-spin {
+  animation: propeller-spin 0.25s linear infinite;
+  transform-origin: 50px 16px;
+}
+
+@keyframes mascot-fly {
+  0% {
+    transform: translate3d(-120vw, 30vh, 0) scale(0.7) rotate(-15deg);
+  }
+  30% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  48% {
+    transform: translate3d(25px, -50px, 0) scale(1.05) rotate(12deg);
+  }
+  65% {
+    transform: translate3d(-15px, -25px, 0) scale(1.02) rotate(-8deg);
+  }
+  75% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  83% {
+    transform: translate3d(0, -10px, 0) scale(1) rotate(-1deg);
+  }
+  88% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(120vw, -50vh, 0) scale(0.7) rotate(20deg);
+  }
+}
+
+.animate-mascot-fly {
+  animation: mascot-fly 2.3s ease-in-out forwards;
+}
+
+@media (max-width: 768px) {
+  @keyframes mascot-fly {
+    0% {
+      transform: translate3d(-120vw, 20vh, 0) scale(0.55) rotate(-15deg);
+    }
+    30% {
+      transform: translate3d(0, 0, 0) scale(0.8) rotate(0deg);
+    }
+    48% {
+      transform: translate3d(15px, -30px, 0) scale(0.85) rotate(10deg);
+    }
+    65% {
+      transform: translate3d(-10px, -15px, 0) scale(0.82) rotate(-6deg);
+    }
+    75% {
+      transform: translate3d(0, 0, 0) scale(0.8) rotate(0deg);
+    }
+    83% {
+      transform: translate3d(0, -6px, 0) scale(0.8) rotate(-1deg);
+    }
+    88% {
+      transform: translate3d(0, 0, 0) scale(0.8) rotate(0deg);
+    }
+    100% {
+      transform: translate3d(120vw, -40vh, 0) scale(0.55) rotate(15deg);
+    }
+  }
+}
+
+/* Custom Handwriting Fonts */
+.font-handwriting {
+  font-family: 'Architects Daughter', cursive;
+}
+
+.font-casual {
+  font-family: 'Patrick Hand', cursive;
+}
+
+.font-chalk {
+  font-family: 'Caveat', cursive;
+}
+
+/* Neubrutalist Sketch Styles */
+.sketch-border {
+  border: 2.5px solid var(--border-color);
+}
+
+.sketch-card {
+  background: var(--canvas-card);
+  border: 2.5px solid var(--border-color);
+  box-shadow: 4px 4px 0px 0px var(--border-color);
+  border-radius: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.3s ease;
+}
+
+.sketch-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px var(--border-color);
+}
+
+.sketch-btn-primary {
+  background: var(--primary);
+  color: #FFFFFF;
+  border: 2.5px solid var(--border-color);
+  box-shadow: 3px 3px 0px 0px var(--border-color);
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.dark .sketch-btn-primary {
+  color: #121212; /* Dark text on yellow chalk */
+}
+
+.sketch-btn-primary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--border-color);
+  background: var(--primary-hover);
+}
+
+.sketch-btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px 0px var(--border-color);
+}
+
+.sketch-btn-secondary {
+  background: var(--canvas-card);
+  color: var(--foreground);
+  border: 2.5px solid var(--border-color);
+  box-shadow: 3px 3px 0px 0px var(--border-color);
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.sketch-btn-secondary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--border-color);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark .sketch-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sketch-btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px 0px var(--border-color);
+}
+
+.sketch-input {
+  background: var(--canvas-card);
+  border: 2.5px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  color: var(--foreground);
+  font-family: 'Patrick Hand', 'Inter', sans-serif;
+  font-size: 1.15rem;
+  outline: none;
+  transition: all 0.1s ease;
+}
+
+.sketch-input::placeholder {
+  font-family: 'Patrick Hand', 'Inter', sans-serif;
+  opacity: 0.6;
+}
+
+.sketch-input:focus {
+  box-shadow: 3px 3px 0px 0px var(--border-color);
+  transform: translate(-1px, -1px);
+}
+
+/* Highlighter effect */
+.highlight-yellow {
+  background: linear-gradient(120deg, var(--highlighter-yellow) 0%, var(--highlighter-yellow) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 85%;
+  background-position: 0 88%;
+  padding: 0 4px;
+}
+
+.highlight-orange {
+  background: linear-gradient(120deg, rgba(231, 90, 61, 0.2) 0%, rgba(231, 90, 61, 0.2) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 80%;
+  background-position: 0 80%;
+  padding: 0 4px;
+}
+
+/* Ruled paper background pattern */
+.ruled-bg {
+  background-image: linear-gradient(#e2e8f0 1px, transparent 1px);
+  background-size: 100% 1.8rem;
+  line-height: 1.8rem;
+}
+
+.dark .ruled-bg {
+  background-image: linear-gradient(#334155 1px, transparent 1px);
+}
+
+/* Sticky Note & Spiral Notepad styling */
+.notebook-container {
+  perspective: 1200px;
+}
+
+.spiral-notepad {
+  background-color: #FFFFFF;
+  color: #1E293B;
+  border: 2.5px solid #1A1A1A;
+  box-shadow: 5px 5px 0px 0px #1A1A1A;
+  border-radius: 6px;
+  position: relative;
+  transition: background-color 0.3s ease;
+}
+
+.dark .spiral-notepad {
+  background-color: #1E1E1E;
+  color: #F5F5F5;
+  border: 2.5px solid #FFFFFF;
+  box-shadow: 5px 5px 0px 0px #FFFFFF;
+}
+
+/* Vertical page flip transition class */
+.notebook-page {
+  transform-style: preserve-3d;
+  transform-origin: top center;
+  transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1.000), opacity 0.5s ease;
+}
+
+.notebook-page.flip-up {
+  transform: rotateX(-120deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.notebook-page.active {
+  transform: rotateX(0deg);
+  opacity: 1;
+}
+
+.notebook-page.flip-down {
+  transform: rotateX(90deg);
+  opacity: 0;
+  pointer-events: none;
 }

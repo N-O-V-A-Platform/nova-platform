@@ -1,65 +1,120 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Mascot from "./components/Mascot";
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+  const [showSplash, setShowSplash] = useState(true);
+  const [fadeSplash, setFadeSplash] = useState(false);
+  const [loaderWidth, setLoaderWidth] = useState("0%");
+
+  useEffect(() => {
+    // Force light mode theme
+    document.documentElement.classList.remove("dark");
+
+    // Trigger loader progress bar
+    const loaderTimer = setTimeout(() => setLoaderWidth("100%"), 100);
+
+    // Fade splash screen out
+    const fadeTimer = setTimeout(() => setFadeSplash(true), 1800);
+
+    // Unmount splash screen
+    const removeTimer = setTimeout(() => setShowSplash(false), 2300);
+
+    return () => {
+      clearTimeout(loaderTimer);
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, []);
+
+  if (showSplash) {
+    return (
+      <div 
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF6EE] transition-opacity duration-500 ${
+          fadeSplash ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <div className="text-center space-y-6 flex flex-col items-center">
+          {/* Custom Animated Mascot */}
+          <Mascot className="w-36 h-36 md:w-44 md:h-44 animate-mascot-fly" />
+          
+          <div className="space-y-2">
+            <h1 className="text-5xl md:text-6xl font-bold font-handwriting tracking-wide">
+              N.O.V.A.
+            </h1>
+            <p className="text-sm font-casual tracking-widest text-gray-500 uppercase">
+              The classroom of tomorrow...
+            </p>
+          </div>
+
+          <div className="w-48 h-4 border-2 border-black rounded-md bg-white p-0.5 shadow-[2.5px_2.5px_0px_#000]">
+            <div 
+              className="h-full bg-[#E75A3D] rounded-sm transition-all duration-[1600ms] ease-out"
+              style={{ width: loaderWidth }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
         </div>
-      </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
+      {/* Decorative Doodles */}
+      <div className="absolute top-12 left-12 select-none hidden md:block text-[#E75A3D] animate-float opacity-40">
+        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+          {/* Sketchy Lightbulb */}
+          <path d="M50,15 C35,15 35,40 35,50 C35,60 45,65 45,75 L55,75 C55,65 65,60 65,50 C65,40 65,15 50,15 Z" />
+          <line x1="45" y1="80" x2="55" y2="80" />
+          <line x1="47" y1="85" x2="53" y2="85" />
+          {/* rays */}
+          <line x1="25" y1="30" x2="15" y2="25" />
+          <line x1="75" y1="30" x2="85" y2="25" />
+          <line x1="50" y1="5" x2="50" y2="0" />
+        </svg>
+      </div>
+
+      <div className="absolute bottom-12 right-12 select-none hidden md:block text-gray-400 animate-glide opacity-40">
+        <svg width="150" height="150" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+          {/* Sketchy Paper Plane */}
+          <path d="M10 50 L90 10 L50 90 L40 60 Z M40 60 L90 10 M40 60 L30 80 L35 60" />
+        </svg>
+      </div>
+
+      <div className="w-full max-w-2xl text-center space-y-8 px-4">
+        {/* Title */}
+        <div className="relative">
+          <h1 className="text-7xl md:text-8xl font-bold font-handwriting tracking-wide">
+            N.O.V.A.
+          </h1>
+          <p className="text-xl md:text-2xl font-casual mt-3 max-w-lg mx-auto">
+            Next-gen Optimized <span className="highlight-yellow">Virtual Assistant</span> for modern learning.
+          </p>
+          <div className="w-48 h-2 mx-auto mt-4 relative">
+            <svg width="100%" height="100%" viewBox="0 0 100 10" preserveAspectRatio="none">
+              <path d="M0,5 Q50,0 100,5" fill="none" stroke="currentColor" strokeWidth="3.5" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-4 max-w-md mx-auto">
+          <Link
+            href="/login"
+            className="w-full sm:w-1/2 sketch-btn-primary py-3.5 px-6 text-xl font-handwriting text-center block"
+          >
+            Enter Classroom
+          </Link>
+          <Link
+            href="/register"
+            className="w-full sm:w-1/2 sketch-btn-secondary py-3.5 px-6 text-xl font-handwriting text-center block"
+          >
+            Signup Now
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

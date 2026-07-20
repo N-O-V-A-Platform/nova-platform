@@ -7,12 +7,7 @@ WORKDIR /app
 
 COPY requirements/ requirements/
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc libpq-dev && \
-    pip install --no-cache-dir -r requirements/local.txt && \
-    apt-get purge -y gcc && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir -r requirements/local.txt
 
 COPY . .
 

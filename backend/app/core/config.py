@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     GROQ_API_KEY: str = ""
+    OPENROUTER_API_KEY: str = ""
     PINECONE_API_KEY: str = ""
 
 
