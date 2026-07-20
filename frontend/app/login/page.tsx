@@ -32,33 +32,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
+    <div className="flex flex-col min-h-screen items-center justify-center p-3 relative overflow-hidden bg-[#FAF6EE] text-[#1E1E1E]">
       {/* Decorative Doodles */}
-      <div className="absolute top-12 left-12 select-none hidden md:block text-gray-400 animate-float opacity-40">
-        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
-          {/* Scribble Star */}
+      <div className="absolute top-12 left-12 select-none hidden md:block text-gray-400 opacity-40">
+        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M50 15 L62 38 L88 40 L68 56 L75 82 L50 68 L25 82 L32 56 L12 40 L38 38 Z" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-      <div className="absolute bottom-12 right-12 select-none hidden md:block text-gray-400 animate-glide opacity-40">
-        <svg width="150" height="150" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
-          {/* Scribble Cloud & Sun */}
+      <div className="absolute bottom-12 right-12 select-none hidden md:block text-gray-400 opacity-40">
+        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M20 60 C25 50, 40 50, 45 60 C50 50, 70 50, 75 60 C80 60, 85 70, 75 80 L25 80 C15 75, 15 65, 20 60 Z" strokeLinecap="round" />
           <circle cx="70" cy="30" r="10" strokeDasharray="4 4" />
         </svg>
       </div>
 
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md my-1">
         {/* Title */}
-        <div className="text-center mb-8 relative">
-          <h1 className="text-6xl font-bold font-handwriting tracking-wide">
+        <div className="text-center mb-3 relative">
+          <h1 className="text-4xl font-bold font-handwriting tracking-wide">
             N.O.V.A.
           </h1>
-          <p className="text-md font-casual mt-2">
+          <p className="text-xs font-casual mt-0.5">
             <span className="highlight-yellow">Beyond Scores. Towards Understanding.</span>
           </p>
           {/* Handdrawn line */}
-          <div className="w-32 h-2 mx-auto mt-3 relative">
+          <div className="w-24 h-1.5 mx-auto mt-2 relative">
             <svg width="100%" height="100%" viewBox="0 0 100 10" preserveAspectRatio="none">
               <path d="M0,5 Q50,0 100,5" fill="none" stroke="currentColor" strokeWidth="3" />
             </svg>
@@ -66,38 +64,38 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <div className="sketch-card p-8 bg-white dark:bg-[#1E1E1E]">
-          <h2 className="text-2xl font-bold font-handwriting mb-6 text-center">
+        <div className="sketch-card p-5 bg-white">
+          <h2 className="text-xl font-bold font-handwriting mb-3 text-center">
             Sign In to Class
           </h2>
 
           {error && (
-            <div className="mb-4 p-3 border-2 border-red-500 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-md text-sm font-casual">
+            <div className="mb-3 p-2.5 border-2 border-red-500 bg-red-50 text-red-600 rounded-md text-xs font-casual">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1 font-casual">Email Address</label>
+              <label className="text-xs font-semibold mb-0.5 font-casual">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="sketch-input"
+                className="sketch-input py-1 px-2 text-sm"
                 placeholder="you@school.edu"
               />
             </div>
 
             <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1 font-casual">Password</label>
+              <label className="text-xs font-semibold mb-0.5 font-casual">Password</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="sketch-input"
+                className="sketch-input py-1 px-2 text-sm"
                 placeholder="••••••••"
               />
             </div>
@@ -105,24 +103,24 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full sketch-btn-primary py-3 mt-4 text-lg font-handwriting"
+              className="w-full sketch-btn-primary py-2 mt-2 text-md font-handwriting"
             >
               {loading ? "Verifying..." : "Enter Classroom"}
             </button>
           </form>
 
-          <div className="relative my-5 flex items-center justify-center">
+          <div className="relative my-3 flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-dashed border-zinc-300 dark:border-zinc-700"></div>
+              <div className="w-full border-t border-dashed border-zinc-300"></div>
             </div>
-            <span className="relative bg-white dark:bg-[#1E1E1E] px-3 font-casual text-sm text-gray-500">
+            <span className="relative bg-white px-2 font-casual text-xs text-gray-500">
               or
             </span>
           </div>
 
           <GoogleAuthButton />
 
-          <div className="mt-6 text-center text-sm font-casual">
+          <div className="mt-4 text-center text-xs font-casual">
             <span>First time here? </span>
             <Link href="/register" className="underline font-bold hover:text-[#E75A3D]">
               Register your account

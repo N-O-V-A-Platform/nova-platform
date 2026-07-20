@@ -43,100 +43,102 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
-      <div className="w-full max-w-md my-8">
+    <div className="flex flex-col min-h-screen items-center justify-center p-3 relative overflow-hidden bg-[#FAF6EE] text-[#1E1E1E]">
+      <div className="w-full max-w-md my-1">
         {/* Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-5xl font-bold font-handwriting tracking-wide">
+        <div className="text-center mb-3">
+          <h1 className="text-4xl font-bold font-handwriting tracking-wide">
             N.O.V.A.
           </h1>
-          <p className="text-md font-casual mt-2">
+          <p className="text-sm font-casual mt-0.5">
             Create your account to get started
           </p>
         </div>
 
         {/* Register Card */}
-        <div className="sketch-card p-8 bg-white dark:bg-[#1E1E1E]">
-          <h2 className="text-2xl font-bold font-handwriting mb-6 text-center">
+        <div className="sketch-card p-5 bg-white">
+          <h2 className="text-xl font-bold font-handwriting mb-3 text-center">
             Student / Teacher Signup
           </h2>
 
           {error && (
-            <div className="mb-4 p-3 border-2 border-red-500 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-md text-sm font-casual">
+            <div className="mb-3 p-2.5 border-2 border-red-500 bg-red-50 text-red-600 rounded-md text-xs font-casual">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-2.5">
+            <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col">
-                <label className="text-sm font-semibold mb-1 font-casual">First Name</label>
+                <label className="text-xs font-semibold mb-0.5 font-casual">First Name</label>
                 <input
                   type="text"
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="sketch-input"
+                  className="sketch-input py-1 px-2 text-sm"
                   placeholder="Arjun"
                 />
               </div>
               <div className="flex flex-col">
-                <label className="text-sm font-semibold mb-1 font-casual">Last Name</label>
+                <label className="text-xs font-semibold mb-0.5 font-casual">Last Name</label>
                 <input
                   type="text"
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="sketch-input"
+                  className="sketch-input py-1 px-2 text-sm"
                   placeholder="R"
                 />
               </div>
             </div>
 
             <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1 font-casual">Email Address</label>
+              <label className="text-xs font-semibold mb-0.5 font-casual">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="sketch-input"
+                className="sketch-input py-1 px-2 text-sm"
                 placeholder="you@school.edu"
               />
             </div>
 
             <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1 font-casual">Password</label>
+              <label className="text-xs font-semibold mb-0.5 font-casual">Password</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="sketch-input"
+                className="sketch-input py-1 px-2 text-sm"
                 placeholder="••••••••"
               />
             </div>
 
             <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1 font-casual">Your Role</label>
-              <div className="grid grid-cols-2 gap-4 mt-1">
+              <label className="text-xs font-semibold mb-0.5 font-casual">Your Role</label>
+              <div className="grid grid-cols-2 gap-3 mt-0.5">
                 <button
                   type="button"
                   onClick={() => setRoleName("Student")}
-                  className={`py-2 border-2 font-handwriting rounded-md transition-all ${roleName === "Student"
+                  className={`py-1.5 border-2 font-handwriting text-sm rounded-md transition-all ${
+                    roleName === "Student"
                       ? "bg-[#E75A3D] text-white border-black"
-                      : "bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border-gray-300 dark:border-zinc-700"
-                    }`}
+                      : "bg-white text-gray-700 border-gray-300"
+                  }`}
                 >
                   Student
                 </button>
                 <button
                   type="button"
                   onClick={() => setRoleName("Lecturer")}
-                  className={`py-2 border-2 font-handwriting rounded-md transition-all ${roleName === "Lecturer"
+                  className={`py-1.5 border-2 font-handwriting text-sm rounded-md transition-all ${
+                    roleName === "Lecturer"
                       ? "bg-[#E75A3D] text-white border-black"
-                      : "bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border-gray-300 dark:border-zinc-700"
-                    }`}
+                      : "bg-white text-gray-700 border-gray-300"
+                  }`}
                 >
                   Lecturer
                 </button>
@@ -144,37 +146,37 @@ export default function RegisterPage() {
             </div>
 
             <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1 font-casual">Institution Code (Optional)</label>
+              <label className="text-xs font-semibold mb-0.5 font-casual">Institution Code (Optional)</label>
               <input
                 type="text"
                 value={institutionCode}
                 onChange={(e) => setInstitutionCode(e.target.value)}
-                className="sketch-input"
-                placeholder="e.g. A J Institute of Engineering and Technology"
+                className="sketch-input py-1 px-2 text-sm"
+                placeholder="e.g. AJIET"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full sketch-btn-primary py-3 mt-4 text-lg font-handwriting"
+              className="w-full sketch-btn-primary py-2 mt-2 text-md font-handwriting"
             >
               {loading ? "Registering..." : "Create Account"}
             </button>
           </form>
 
-          <div className="relative my-5 flex items-center justify-center">
+          <div className="relative my-3 flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-dashed border-zinc-300 dark:border-zinc-700"></div>
+              <div className="w-full border-t border-dashed border-zinc-300"></div>
             </div>
-            <span className="relative bg-white dark:bg-[#1E1E1E] px-3 font-casual text-sm text-gray-500">
+            <span className="relative bg-white px-2 font-casual text-xs text-gray-500">
               or
             </span>
           </div>
 
           <GoogleAuthButton />
 
-          <div className="mt-6 text-center text-sm font-casual">
+          <div className="mt-4 text-center text-xs font-casual">
             <span>Already registered? </span>
             <Link href="/login" className="underline font-bold hover:text-[#E75A3D]">
               Sign in here
