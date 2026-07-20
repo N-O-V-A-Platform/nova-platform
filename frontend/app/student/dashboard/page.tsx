@@ -109,7 +109,7 @@ export default function StudentDashboard() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Sidebar / Topbar Navigation */}
-      <aside className="w-full md:w-64 bg-white dark:bg-[#1E1E1E] sketch-border border-t-0 border-b-2 border-l-0 md:border-b-0 md:border-r-2 p-4 md:p-6 flex flex-col justify-between z-40">
+      <aside className="w-full md:w-64 bg-white dark:bg-[var(--canvas-card)] sketch-border border-t-0 border-b-2 border-l-0 md:border-b-0 md:border-r-2 p-4 md:p-6 flex flex-col justify-between z-40">
         <div>
           <div className="flex md:block justify-between items-center md:items-stretch">
             <div className="mb-0 md:mb-8">
@@ -207,7 +207,7 @@ export default function StudentDashboard() {
           {/* Main Content Column (Left/Center) */}
           <div className="lg:col-span-2 space-y-8">
             {/* Ruled Paper Announcement Board */}
-            <div className="sketch-card p-6 bg-white dark:bg-[#1E1E1E]">
+            <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)]">
               <h3 className="text-xl font-bold font-handwriting mb-4 border-b-2 border-dashed border-black dark:border-zinc-700 pb-2">
                 Class Announcements
               </h3>
@@ -225,7 +225,7 @@ export default function StudentDashboard() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {courses.map((course) => (
-                  <div key={course.id} className="sketch-card p-5 bg-white dark:bg-[#1E1E1E] flex flex-col justify-between">
+                  <div key={course.id} className="sketch-card p-5 bg-white dark:bg-[var(--canvas-card)] flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start mb-2">
                         <span className="bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-casual font-bold text-xs px-2.5 py-1 rounded border border-blue-400">
@@ -266,7 +266,7 @@ export default function StudentDashboard() {
               )}
               <div className="space-y-4">
                 {availableCourses.map((course) => (
-                  <div key={course.id} className="sketch-card p-4 bg-white dark:bg-[#1E1E1E] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div key={course.id} className="sketch-card p-4 bg-white dark:bg-[var(--canvas-card)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                       <span className="font-casual bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded text-xs mr-2 font-bold">
                         {course.code}
@@ -383,7 +383,7 @@ export default function StudentDashboard() {
             )}
 
             {/* Socials & Media Board */}
-            <div className="sketch-card p-6 bg-white dark:bg-[#1E1E1E] relative overflow-hidden">
+            <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)] relative overflow-hidden">
               <div className="absolute -top-4 -right-4 opacity-10">
                 <svg width="60" height="60" viewBox="0 0 100 100" fill="currentColor">
                   <path d="M10,60 C20,40 50,40 60,60 C70,40 90,50 90,70 L10,70 Z" />

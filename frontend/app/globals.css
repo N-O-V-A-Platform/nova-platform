@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Patrick+Hand&family=Caveat:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #FAF6EE;
   --foreground: #1A1A1A;
@@ -13,14 +15,14 @@
 }
 
 .dark {
-  --background: #153229; /* Chalkboard Green */
-  --foreground: #F5FAFA; /* Chalk White */
-  --primary: #F4D03F; /* Chalk Yellow */
-  --primary-hover: #D4AC0D;
-  --secondary: #60A5FA;
-  --highlighter-yellow: rgba(244, 208, 63, 0.25);
-  --canvas-card: #1D4337; /* Card slate green */
-  --border-color: #FFFFFF;
+  --background: #192722; /* Premium Chalkboard Dark Slate Green */
+  --foreground: #EEF5F2; /* Soft Cream Chalk White */
+  --primary: #F5D76E; /* Chalk Yellow */
+  --primary-hover: #E5C34F;
+  --secondary: #76A9FA;
+  --highlighter-yellow: rgba(245, 215, 110, 0.25);
+  --canvas-card: #20312B; /* Premium lighter slate green card */
+  --border-color: #EEF5F2;
 }
 
 body {

@@ -107,7 +107,7 @@ export default function LecturerDashboard() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Sidebar / Topbar Navigation */}
-      <aside className="w-full md:w-64 bg-white dark:bg-[#1E1E1E] sketch-border border-t-0 border-b-2 border-l-0 md:border-b-0 md:border-r-2 p-4 md:p-6 flex flex-col justify-between z-40">
+      <aside className="w-full md:w-64 bg-white dark:bg-[var(--canvas-card)] sketch-border border-t-0 border-b-2 border-l-0 md:border-b-0 md:border-r-2 p-4 md:p-6 flex flex-col justify-between z-40">
         <div>
           <div className="flex md:block justify-between items-center md:items-stretch">
             <div className="mb-0 md:mb-8">
@@ -203,13 +203,13 @@ export default function LecturerDashboard() {
             </h3>
 
             {escalations.length === 0 ? (
-              <div className="sketch-card p-8 text-center bg-white dark:bg-[#1E1E1E] font-casual text-lg">
+              <div className="sketch-card p-8 text-center bg-white dark:bg-[var(--canvas-card)] font-casual text-lg">
                 All quiet on the classroom front! The AI is resolving queries confidently.
               </div>
             ) : (
               <div className="space-y-6">
                 {escalations.map((esc) => (
-                  <div key={esc.id} className="sketch-card p-6 bg-white dark:bg-[#1E1E1E] relative">
+                  <div key={esc.id} className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)] relative">
                     <div className="flex justify-between items-center mb-3">
                       <span className="bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-casual text-xs px-2 py-0.5 border border-red-400 rounded">
                         Confidence Low
@@ -257,7 +257,7 @@ export default function LecturerDashboard() {
           {/* Courses & Admin Info (Right) */}
           <div className="space-y-8">
             {/* Courses managed */}
-            <div className="sketch-card p-6 bg-white dark:bg-[#1E1E1E]">
+            <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)]">
               <h3 className="text-xl font-bold font-handwriting mb-4">
                 My Managed Courses
               </h3>
