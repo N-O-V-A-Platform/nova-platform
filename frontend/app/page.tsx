@@ -1,64 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import Mascot from "./components/Mascot";
 
 export default function Home() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [fadeSplash, setFadeSplash] = useState(false);
-  const [loaderWidth, setLoaderWidth] = useState("0%");
-
   useEffect(() => {
     // Force light mode theme
     document.documentElement.classList.remove("dark");
-
-    // Trigger loader progress bar
-    const loaderTimer = setTimeout(() => setLoaderWidth("100%"), 100);
-
-    // Fade splash screen out
-    const fadeTimer = setTimeout(() => setFadeSplash(true), 1800);
-
-    // Unmount splash screen
-    const removeTimer = setTimeout(() => setShowSplash(false), 2300);
-
-    return () => {
-      clearTimeout(loaderTimer);
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
-    };
   }, []);
-
-  if (showSplash) {
-    return (
-      <div 
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF6EE] transition-opacity duration-500 ${
-          fadeSplash ? "opacity-0" : "opacity-100"
-        }`}
-      >
-        <div className="text-center space-y-6 flex flex-col items-center">
-          {/* Custom Animated Mascot */}
-          <Mascot className="w-36 h-36 md:w-44 md:h-44 animate-mascot-fly" />
-          
-          <div className="space-y-2">
-            <h1 className="text-5xl md:text-6xl font-bold font-handwriting tracking-wide">
-              N.O.V.A.
-            </h1>
-            <p className="text-sm font-casual tracking-widest text-gray-500 uppercase">
-              The classroom of tomorrow...
-            </p>
-          </div>
-
-          <div className="w-48 h-4 border-2 border-black rounded-md bg-white p-0.5 shadow-[2.5px_2.5px_0px_#000]">
-            <div 
-              className="h-full bg-[#E75A3D] rounded-sm transition-all duration-[1600ms] ease-out"
-              style={{ width: loaderWidth }}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">

@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshUser = async () => {
+    const startTime = Date.now();
     try {
       const token = authService.getToken();
       if (token) {
@@ -68,7 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authService.clearToken();
       setUser(null);
     } finally {
-      setLoading(false);
+      const elapsed = Date.now() - startTime;
+      const minDuration = 1600; // 1.6s minimum splash loading time
+      const remainingTime = Math.max(0, minDuration - elapsed);
+      setTimeout(() => {
+        setLoading(false);
+      }, remainingTime);
     }
   };
 

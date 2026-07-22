@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Patrick_Hand, Architects_Daughter, Caveat } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import SplashLoader from "@/app/components/SplashLoader";
 
 const patrickHand = Patrick_Hand({
   weight: "400",
@@ -24,10 +26,15 @@ const caveat = Caveat({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "N.O.V.A. - Next-gen Optimized Virtual Assistant",
-  description: "Transforming classrooms into intelligent, interactive learning environments.",
-};
+function AuthAppWrapper({ children }: { children: React.ReactNode }) {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return <SplashLoader />;
+  }
+
+  return <>{children}</>;
+}
 
 export default function RootLayout({
   children,
@@ -38,7 +45,7 @@ export default function RootLayout({
     <html lang="en" className={`h-full antialiased ${patrickHand.variable} ${architectsDaughter.variable} ${caveat.variable}`}>
       <body className="min-h-full flex flex-col font-casual">
         <AuthProvider>
-          {children}
+          <AuthAppWrapper>{children}</AuthAppWrapper>
         </AuthProvider>
       </body>
     </html>
