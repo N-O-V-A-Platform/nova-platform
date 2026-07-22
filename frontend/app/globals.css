@@ -378,3 +378,52 @@ input, select, textarea, button {
 .animate-mascot-dash {
   animation: mascot-dash 2.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
+
+@keyframes mascot-wiggle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  15% { transform: scale(1.1) rotate(-10deg) translate3d(-10px, 0, 0); }
+  30% { transform: scale(1.15) rotate(10deg) translate3d(10px, 0, 0); }
+  45% { transform: scale(1.1) rotate(-8deg) translate3d(-5px, 0, 0); }
+  60% { transform: scale(1.15) rotate(8deg) translate3d(5px, 0, 0); }
+  75% { transform: scale(1.05) rotate(-3deg); }
+}
+
+.animate-mascot-wiggle {
+  animation: mascot-wiggle 2.3s ease-in-out forwards;
+}
+
+@keyframes mascot-spiral {
+  0% { transform: scale(0.1) rotate(0deg); opacity: 0; }
+  40% { transform: scale(1.35) rotate(360deg); opacity: 1; }
+  70% { transform: scale(1) rotate(360deg); }
+  100% { transform: scale(0.1) rotate(720deg); opacity: 0; }
+}
+
+.animate-mascot-spiral {
+  animation: mascot-spiral 2.3s ease-in-out forwards;
+}
+
+@keyframes mascot-bounce {
+  0% { transform: translate3d(-100vw, -30vh, 0) rotate(45deg); }
+  30% { transform: translate3d(-40vw, 25vh, 0) rotate(-20deg); }
+  60% { transform: translate3d(0, -15vh, 0) rotate(10deg); }
+  80% { transform: translate3d(40vw, 15vh, 0) rotate(-10deg); }
+  100% { transform: translate3d(100vw, -20vh, 0) rotate(45deg); }
+}
+
+.animate-mascot-bounce {
+  animation: mascot-bounce 2.3s ease-in-out forwards;
+}
+
+@keyframes mascot-zoom {
+  0% { transform: scale(0); opacity: 0; }
+  30% { transform: scale(1.7); opacity: 1; }
+  50% { transform: scale(1.7) translate3d(-15px, 0, 0) rotate(-6deg); }
+  70% { transform: scale(1.7) translate3d(15px, 0, 0) rotate(6deg); }
+  85% { transform: scale(1); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.animate-mascot-zoom {
+  animation: mascot-zoom 2.3s ease-in-out forwards;
+}
