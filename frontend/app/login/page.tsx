@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Public pages (landing, login, signup) are always in light mode (Whiteboard theme)
+    // Public pages are always in light mode (Whiteboard theme)
     document.documentElement.classList.remove("dark");
   }, []);
 
@@ -32,70 +32,59 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center p-3 relative overflow-hidden bg-[#FAF6EE] text-[#1E1E1E]">
-      {/* Decorative Doodles */}
-      <div className="absolute top-12 left-12 select-none hidden md:block text-gray-400 opacity-40">
-        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M50 15 L62 38 L88 40 L68 56 L75 82 L50 68 L25 82 L32 56 L12 40 L38 38 Z" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-      <div className="absolute bottom-12 right-12 select-none hidden md:block text-gray-400 opacity-40">
-        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M20 60 C25 50, 40 50, 45 60 C50 50, 70 50, 75 60 C80 60, 85 70, 75 80 L25 80 C15 75, 15 65, 20 60 Z" strokeLinecap="round" />
-          <circle cx="70" cy="30" r="10" strokeDasharray="4 4" />
-        </svg>
+    <div className="min-h-screen bg-[#FAF6EE] text-[#1E1E1E] flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Centered Brand Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-6xl font-bold font-handwriting tracking-wide text-[#E75A3D]">
+          N.O.V.A.
+        </h1>
+        <p className="text-xs uppercase tracking-wider font-casual text-zinc-500 mt-2">
+          Beyond Scores. Towards Understanding.
+        </p>
       </div>
 
-      <div className="w-full max-w-md my-1">
-        {/* Title */}
-        <div className="text-center mb-3 relative">
-          <h1 className="text-4xl font-bold font-handwriting tracking-wide">
-            N.O.V.A.
-          </h1>
-          <p className="text-xs font-casual mt-0.5">
-            <span className="highlight-yellow">Beyond Scores. Towards Understanding.</span>
-          </p>
-          {/* Handdrawn line */}
-          <div className="w-24 h-1.5 mx-auto mt-2 relative">
-            <svg width="100%" height="100%" viewBox="0 0 100 10" preserveAspectRatio="none">
-              <path d="M0,5 Q50,0 100,5" fill="none" stroke="currentColor" strokeWidth="3" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Login Card */}
-        <div className="sketch-card p-5 bg-white">
-          <h2 className="text-xl font-bold font-handwriting mb-3 text-center">
-            Sign In to Class
+      {/* Centered Auth Card */}
+      <div className="w-full max-w-md">
+        <div className="sketch-card p-6 sm:p-8 bg-white border-2 border-black rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="text-2xl font-bold font-handwriting mb-6 text-center">
+            Sign In to N.O.V.A.
           </h2>
 
           {error && (
-            <div className="mb-3 p-2.5 border-2 border-red-500 bg-red-50 text-red-600 rounded-md text-xs font-casual">
+            <div className="mb-4 p-3 border-2 border-red-500 bg-red-50 text-red-600 rounded-md text-xs font-casual">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col">
-              <label className="text-xs font-semibold mb-0.5 font-casual">Email Address</label>
+              <label className="text-xs font-semibold mb-1 font-casual">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="sketch-input py-1 px-2 text-sm"
+                className="sketch-input py-2 px-3 text-sm border-2 border-black rounded-md outline-none focus:ring-2 focus:ring-[#E75A3D] font-casual"
                 placeholder="you@school.edu"
               />
             </div>
 
             <div className="flex flex-col">
-              <label className="text-xs font-semibold mb-0.5 font-casual">Password</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-semibold font-casual">Password</label>
+                <Link
+                  href="/forgot-password"
+                  className="text-[10px] text-zinc-500 hover:text-black underline font-casual"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="sketch-input py-1 px-2 text-sm"
+                className="sketch-input py-2 px-3 text-sm border-2 border-black rounded-md outline-none focus:ring-2 focus:ring-[#E75A3D]"
                 placeholder="••••••••"
               />
             </div>
@@ -103,13 +92,13 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full sketch-btn-primary py-2 mt-2 text-md font-handwriting"
+              className="w-full py-2.5 bg-[#E75A3D] text-white border-2 border-black font-handwriting text-lg rounded-md hover:bg-orange-600 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
             >
               {loading ? "Verifying..." : "Enter Classroom"}
             </button>
           </form>
 
-          <div className="relative my-3 flex items-center justify-center">
+          <div className="relative my-4 flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-dashed border-zinc-300"></div>
             </div>
@@ -120,13 +109,18 @@ export default function LoginPage() {
 
           <GoogleAuthButton />
 
-          <div className="mt-4 text-center text-xs font-casual">
+          <div className="mt-5 text-center text-xs font-casual text-zinc-600">
             <span>First time here? </span>
-            <Link href="/register" className="underline font-bold hover:text-[#E75A3D]">
+            <Link href="/register" className="underline font-bold hover:text-[#E75A3D] text-black">
               Register your account
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Footer credits */}
+      <div className="text-xs text-zinc-400 font-casual mt-8">
+        &copy; {new Date().getFullYear()} N.O.V.A Platform. All rights reserved.
       </div>
     </div>
   );

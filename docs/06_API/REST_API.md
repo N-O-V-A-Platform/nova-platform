@@ -115,6 +115,16 @@ POST /auth/logout
 POST /auth/refresh
 ```
 
+Request body:
+
+```json
+{
+  "refresh_token": "<NOVA_REFRESH_TOKEN>"
+}
+```
+
+Returns a new access token and rotated refresh token for active users.
+
 ---
 
 ## Google OAuth Login
@@ -122,6 +132,23 @@ POST /auth/refresh
 ```
 POST /auth/google
 ```
+
+Request body:
+
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIs..."
+}
+```
+
+The backend verifies this Google ID token against `GOOGLE_CLIENT_ID` before
+creating or logging in a N.O.V.A user.
+
+Role rules:
+
+* Emails listed in `ADMIN_EMAILS` are promoted to Admin after verified auth.
+* Google users are created as Students by default unless their email is an admin email.
+* Lecturer accounts must be approved by an Admin before they can log in.
 
 ---
 
@@ -147,6 +174,43 @@ PUT /users/me
 
 ```
 PUT /users/change-password
+```
+
+## Request Lecturer Approval
+
+```
+POST /users/request-lecturer-role
+Authorization: Bearer <NOVA_JWT>
+```
+
+Moves the current Student account into `Pending Approval` as a Lecturer. An
+Admin must approve the request before the account can log in as a Lecturer.
+
+---
+
+# 7. Admin API
+
+All Admin endpoints require a bearer token for an active Admin user.
+
+## Pending Lecturer Requests
+
+```
+GET /admin/pending-lecturers?limit=100&offset=0
+Authorization: Bearer <NOVA_JWT>
+```
+
+## Approve Lecturer
+
+```
+POST /admin/approve-lecturer/{user_id}
+Authorization: Bearer <NOVA_JWT>
+```
+
+## Reject Lecturer
+
+```
+POST /admin/reject-lecturer/{user_id}
+Authorization: Bearer <NOVA_JWT>
 ```
 
 ---

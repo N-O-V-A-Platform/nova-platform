@@ -10,7 +10,8 @@ interface AuthContextType {
   theme: "light" | "dark";
   login: (credentials: any) => Promise<void>;
   register: (data: any) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
+  onboard: (data: any) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   toggleTheme: () => void;
@@ -82,9 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(res.user);
       setLoading(false);
       
-      // Redirect based on role
+      // Redirect based on role and onboarding status
       if (res.user.role_name === "Admin") {
         router.push("/admin");
+      } else if (!res.user.is_onboarded) {
+        router.push("/onboarding");
       } else if (res.user.role_name === "Lecturer") {
         router.push("/lecturer/dashboard");
       } else {
@@ -103,9 +106,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(res.user);
       setLoading(false);
       
-      // Redirect based on role
+      // Redirect based on role and onboarding status
       if (res.user.role_name === "Admin") {
         router.push("/admin");
+      } else if (!res.user.is_onboarded) {
+        router.push("/onboarding");
       } else if (res.user.role_name === "Lecturer") {
         router.push("/lecturer/dashboard");
       } else {
@@ -117,17 +122,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const googleLogin = async (credential: string) => {
+  const googleLogin = async (idToken: string) => {
     setLoading(true);
     try {
-      const res = await authService.googleAuth(credential);
+      const res = await authService.googleAuth(idToken);
       setUser(res.user);
       setLoading(false);
       
-      // Redirect based on role
+      // Redirect based on role and onboarding status
       if (res.user.role_name === "Admin") {
         router.push("/admin");
+      } else if (!res.user.is_onboarded) {
+        router.push("/onboarding");
       } else if (res.user.role_name === "Lecturer") {
+        router.push("/lecturer/dashboard");
+      } else {
+        router.push("/student/dashboard");
+      }
+    } catch (err) {
+      setLoading(false);
+      throw err;
+    }
+  };
+
+  const onboard = async (data: any) => {
+    setLoading(true);
+    try {
+      const res = await authService.onboard(data);
+      setUser(res.user);
+      setLoading(false);
+      
+      if (res.user.role_name === "Lecturer") {
         router.push("/lecturer/dashboard");
       } else {
         router.push("/student/dashboard");
@@ -144,8 +169,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/login");
   };
 
+
   return (
-    <AuthContext.Provider value={{ user, loading, theme, login, register, googleLogin, logout, refreshUser, toggleTheme }}>
+    <AuthContext.Provider value={{ user, loading, theme, login, register, googleLogin, onboard, logout, refreshUser, toggleTheme }}>
       {children}
     </AuthContext.Provider>
   );

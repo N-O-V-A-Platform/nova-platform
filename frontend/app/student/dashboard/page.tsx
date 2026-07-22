@@ -4,17 +4,18 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth";
+import Link from "next/link";
 
-export default function StudentDashboard() {
-  const { user, loading, logout, theme, toggleTheme } = useAuth();
+export default function StudentDashboardOverview() {
+  const { user } = useAuth();
   const router = useRouter();
 
-  const [courses, setCourses] = useState<any[]>([]);
-  const [availableCourses, setAvailableCourses] = useState<any[]>([]);
   const [showStickyNote, setShowStickyNote] = useState(true);
-  const [enrollMsg, setEnrollMsg] = useState("");
+  const [announcements, setAnnouncements] = useState<string[]>([]);
+  const [uipathJourney, setUipathJourney] = useState<any>(null);
+  const [studyTip, setStudyTip] = useState("");
 
-  // Notepad state: 3-page notebook
+  // Notepad state: dynamic notebook
   const [pages, setPages] = useState<string[]>(["", "", ""]);
   const [activePage, setActivePage] = useState(0);
 
@@ -44,6 +45,13 @@ export default function StudentDashboard() {
   const nextPage = () => {
     if (activePage < pages.length - 1) {
       setActivePage(activePage + 1);
+    } else {
+      const updated = [...pages, ""];
+      setPages(updated);
+      setActivePage(activePage + 1);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("nova_notepad_pages", JSON.stringify(updated));
+      }
     }
   };
 
@@ -53,395 +61,244 @@ export default function StudentDashboard() {
     }
   };
 
-  // Fetch courses from backend
-  const fetchCourses = async () => {
+  const deletePage = () => {
+    if (pages.length <= 1) {
+      // Clear current page instead of deleting the last page
+      handlePageTextChange("");
+      return;
+    }
+    const updated = pages.filter((_, idx) => idx !== activePage);
+    setPages(updated);
+    const newActive = activePage >= updated.length ? updated.length - 1 : activePage;
+    setActivePage(newActive);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nova_notepad_pages", JSON.stringify(updated));
+    }
+  };
+
+  // Fetch announcements from backend
+  const fetchAnnouncements = async () => {
     try {
-      const allCourses = await authService.getCourses();
-      if (allCourses.length > 0) {
-        setCourses(allCourses.slice(0, 2));
-        setAvailableCourses(allCourses.slice(2));
-      } else {
-        // Fallbacks if db is empty
-        const fallbackCourses = [
-          { id: "1", title: "Introduction to Computer Science", code: "CS101", semester: 1, credits: 4, lecturer: { first_name: "Dr. Alan", last_name: "Turing" } },
-          { id: "2", title: "Design & Analysis of Algorithms", code: "CS302", semester: 3, credits: 4, lecturer: { first_name: "Prof. Barbara", last_name: "Liskov" } }
-        ];
-        setCourses(fallbackCourses);
-        setAvailableCourses([
-          { id: "3", title: "Database Management Systems", code: "CS204", semester: 2, credits: 3, lecturer: { first_name: "Dr. Edgar", last_name: "Codd" } }
-        ]);
-      }
+      const data = await authService.getAnnouncements();
+      setAnnouncements(data);
     } catch (err) {
-      console.error("Failed to load courses:", err);
+      console.error("Failed to load announcements:", err);
+      setAnnouncements([
+        "Welcome to N.O.V.A! Your AI assistant is fully grounded in your slides.",
+        "Stay curious and keep exploring your courses!"
+      ]);
+    }
+  };
+
+  // Fetch UiPath Academy Study Journey details
+  const fetchUiPathData = async () => {
+    try {
+      const journeyData = await authService.getUiPathJourney();
+      setUipathJourney(journeyData);
+    } catch (err) {
+      console.error("Failed to load UiPath data:", err);
+    }
+  };
+
+  // Fetch dynamic AI Study Tip
+  const fetchStudyTip = async () => {
+    try {
+      const res = await authService.getStudyTip();
+      setStudyTip(res.tip);
+    } catch (err) {
+      console.error("Failed to load study tip:", err);
+      setStudyTip("Break your study sessions into 25-minute blocks using the Pomodoro technique to stay focused.");
     }
   };
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    } else if (user) {
-      fetchCourses();
+    if (user) {
+      fetchAnnouncements();
+      fetchUiPathData();
+      fetchStudyTip();
     }
-  }, [user, loading]);
+  }, [user]);
 
-  const handleEnroll = async (courseId: string) => {
-    try {
-      setEnrollMsg("");
-      await authService.enrollCourse(courseId);
-      setEnrollMsg("Enrolled successfully! Updating courses...");
-      setTimeout(() => {
-        fetchCourses();
-        setEnrollMsg("");
-      }, 1500);
-    } catch (err: any) {
-      setEnrollMsg(`Enrollment failed: ${err.message}`);
-    }
-  };
-
-  if (loading || !user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center font-handwriting text-2xl">
-        Writing whiteboard contents...
-      </div>
-    );
-  }
+  const xpCount = uipathJourney ? uipathJourney.completed_count * 200 : 0;
+  const currentRank = uipathJourney && uipathJourney.completed_count > 0 
+    ? `#${Math.max(1, 20 - uipathJourney.completed_count * 2)}` 
+    : "Unranked";
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      {/* Sidebar / Topbar Navigation */}
-      <aside className="w-full md:w-64 bg-white dark:bg-[var(--canvas-card)] sketch-border border-t-0 border-b-2 border-l-0 md:border-b-0 md:border-r-2 p-4 md:p-6 flex flex-col justify-between z-40">
-        <div>
-          <div className="flex md:block justify-between items-center md:items-stretch">
-            <div className="mb-0 md:mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold font-handwriting text-[#E75A3D]">
-                N.O.V.A.
-              </h1>
-              <p className="text-[10px] md:text-xs font-casual uppercase tracking-wider text-gray-400">
-                Student Platform
-              </p>
-            </div>
-
-            {/* Desktop Profile Card */}
-            <div className="hidden md:block sketch-card p-4 mb-6 bg-zinc-50 dark:bg-zinc-800/40">
-              <div className="font-handwriting text-lg leading-tight">
-                {user.first_name} {user.last_name}
-              </div>
-              <div className="text-xs font-casual mt-1 text-gray-500 dark:text-zinc-400">
-                {user.role_name}
-              </div>
-              <div className="mt-3 flex items-center gap-2 text-xs font-casual">
-                <span className="bg-[#FEF08A] dark:bg-yellow-950 px-2 py-0.5 border border-black dark:border-white rounded">
-                  XP: 1,240
-                </span>
-                <span className="bg-orange-100 dark:bg-orange-950 px-2 py-0.5 border border-black dark:border-white rounded">
-                  Rank: #12
-                </span>
-              </div>
-            </div>
-
-            {/* Mobile Profile Card */}
-            <div className="flex md:hidden items-center gap-3">
-              <span className="text-xs bg-[#FEF08A] dark:bg-yellow-950 px-2 py-0.5 border border-black rounded font-casual">
-                XP: 1.2k
-              </span>
-              <button
-                onClick={logout}
-                className="sketch-btn-secondary px-3 py-1 font-handwriting text-xs whitespace-nowrap"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-
-          {/* Navigation links: scrollable horizontally on mobile, stacked vertically on desktop */}
-          <nav className="flex md:flex-col overflow-x-auto md:overflow-x-visible gap-2 mt-4 md:mt-0 pb-1 md:pb-0 font-handwriting">
-            <button className="flex-shrink-0 px-3 py-1 bg-[#E75A3D]/10 border-2 border-[#E75A3D] rounded-md text-[#E75A3D] font-bold text-xs md:text-base md:py-2 md:w-full md:text-left">
-              Dashboard
-            </button>
-            <button 
-              onClick={() => alert("Learn Module (Phase 4 RAG chatbot) is coming soon!")}
-              className="flex-shrink-0 px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-2 border-transparent hover:border-black dark:hover:border-white rounded-md transition-all text-xs md:text-base md:py-2 md:w-full md:text-left"
-            >
-              Ask AI (RAG)
-            </button>
-            <button className="flex-shrink-0 px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-2 border-transparent hover:border-black dark:hover:border-white rounded-md transition-all text-xs md:text-base md:py-2 md:w-full md:text-left">
-              Skill Passport
-            </button>
-            <button className="flex-shrink-0 px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-2 border-transparent hover:border-black dark:hover:border-white rounded-md transition-all text-xs md:text-base md:py-2 md:w-full md:text-left">
-              Insights
-            </button>
-          </nav>
+    <div className="space-y-8">
+      {/* Header Banner */}
+      <div className="sketch-card p-6 bg-gradient-to-r from-orange-50 to-orange-100/40 dark:from-zinc-900 dark:to-zinc-800/20 border-2 border-black dark:border-zinc-800 rounded-lg relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold font-handwriting text-[#E75A3D] mb-1.5">
+            Welcome back, {user?.first_name}!
+          </h2>
+          <p className="text-base font-casual text-zinc-600 dark:text-zinc-400">
+            Keep up the excellent work. Here is your overview for today.
+          </p>
         </div>
+        <div className="absolute right-4 bottom-[-15px] text-zinc-300 dark:text-zinc-800 opacity-20 select-none hidden md:block">
+          <svg className="w-24 h-24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+      </div>
 
-        {/* Desktop Logout Button */}
-        <button
-          onClick={logout}
-          className="hidden md:block mt-8 w-full sketch-btn-secondary py-2 font-handwriting"
-        >
-          Log Out
-        </button>
-      </aside>
-
-      {/* Main Dashboard Area */}
-      <main className="flex-1 p-6 md:p-8 relative">
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h2 className="text-4xl font-bold font-handwriting">
-              Classroom Whiteboard
-            </h2>
-            <p className="font-casual text-gray-500 mt-1">
-              Check announcements, launch RAG sessions, or enroll in new subjects.
-            </p>
-          </div>
-
-          <button
-            onClick={toggleTheme}
-            className="sketch-btn-secondary px-4 py-2 font-handwriting flex items-center gap-2"
-          >
-            {theme === "light" ? "Blackboard Mode" : "Whiteboard Mode"}
-          </button>
-        </header>
-
-        {/* Dash Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content Column (Left/Center) */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Ruled Paper Announcement Board */}
-            <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)]">
-              <h3 className="text-xl font-bold font-handwriting mb-4 border-b-2 border-dashed border-black dark:border-zinc-700 pb-2">
-                Class Announcements
-              </h3>
-              <div className="ruled-bg font-casual text-lg text-zinc-700 dark:text-zinc-300">
-                <p>Welcome to N.O.V.A! Your AI assistant is grounded in real slides.</p>
-                <p>New lecture materials for CS101 have been indexed into Pinecone.</p>
-                <p>Earn the 'RAG Pioneer' badge by asking 5 course-related queries!</p>
-              </div>
-            </div>
-
-            {/* Enrolled Courses */}
-            <div>
-              <h3 className="text-2xl font-bold font-handwriting mb-4">
-                My Active Courses
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {courses.map((course) => (
-                  <div key={course.id} className="sketch-card p-5 bg-white dark:bg-[var(--canvas-card)] flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-casual font-bold text-xs px-2.5 py-1 rounded border border-blue-400">
-                          {course.code}
-                        </span>
-                        <span className="text-xs font-casual text-gray-500">
-                          {course.credits} Credits
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-bold font-handwriting mb-3 mt-1 leading-tight">
-                        {course.title}
-                      </h4>
-                      <p className="text-sm font-casual text-gray-600 dark:text-zinc-400">
-                        Instructor: {course.lecturer?.first_name || "Lec"} {course.lecturer?.last_name || "Name"}
-                      </p>
-                    </div>
-
-                    <button 
-                      onClick={() => alert(`Launching chat assistant for ${course.title}...`)}
-                      className="sketch-btn-primary w-full py-2 mt-5 font-handwriting text-sm"
-                    >
-                      Ask AI Assistant
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Available to Enroll */}
-            <div>
-              <h3 className="text-2xl font-bold font-handwriting mb-4">
-                Enroll in Other Courses
-              </h3>
-              {enrollMsg && (
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 text-yellow-800 rounded font-casual">
-                  {enrollMsg}
-                </div>
-              )}
-              <div className="space-y-4">
-                {availableCourses.map((course) => (
-                  <div key={course.id} className="sketch-card p-4 bg-white dark:bg-[var(--canvas-card)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                      <span className="font-casual bg-zinc-200 dark:bg-zinc-700 px-2 py-0.5 rounded text-xs mr-2 font-bold">
-                        {course.code}
-                      </span>
-                      <span className="font-bold font-handwriting text-lg">{course.title}</span>
-                      <p className="text-sm font-casual text-gray-500 mt-1">
-                        Lecturer: {course.lecturer?.first_name} {course.lecturer?.last_name} | Semester {course.semester}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleEnroll(course.id)}
-                      className="sketch-btn-secondary py-1.5 px-4 font-handwriting text-xs whitespace-nowrap"
-                    >
-                      Enroll
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar Widgets Column (Right) */}
-          <div className="space-y-8">
-            {/* Spiral bound Notepad with Flip page Animation */}
-            {showStickyNote ? (
-              <div className="notebook-container w-full">
-                <div className="spiral-notepad p-6 min-h-[300px] flex flex-col justify-between pt-8 relative overflow-visible">
-                  
-                  {/* Spiral Rings */}
-                  <div className="absolute top-0 left-0 right-0 -translate-y-2 flex justify-between px-6 pointer-events-none z-30">
-                    {Array.from({ length: 9 }).map((_, idx) => (
-                      <div 
-                        key={idx} 
-                        className="w-3 h-7 bg-zinc-800 dark:bg-zinc-300 rounded-full border border-black dark:border-white shadow-sm"
-                      />
-                    ))}
-                  </div>
-
-                  {/* Header Options */}
-                  <div className="flex justify-between items-center mb-3 border-b-2 border-dashed border-zinc-300 dark:border-zinc-700 pb-1 z-10">
-                    <span className="font-handwriting text-sm font-bold flex items-center gap-1.5">
-                      Course Journal
-                    </span>
-                    <button 
-                      onClick={() => setShowStickyNote(false)}
-                      className="text-xs bg-zinc-200 dark:bg-zinc-700 border-0 hover:text-red-500 rounded px-1 font-bold"
-                    >
-                      [x]
-                    </button>
-                  </div>
-
-                  {/* Pages Stack with 3D Flip Transitions */}
-                  <div className="relative flex-1 min-h-[160px] overflow-hidden">
-                    {pages.map((pageText, idx) => {
-                      let pageClass = "notebook-page absolute inset-0 w-full h-full bg-transparent flex flex-col";
-                      if (idx === activePage) {
-                        pageClass += " active";
-                      } else if (idx < activePage) {
-                        pageClass += " flip-up";
-                      } else {
-                        pageClass += " flip-down";
-                      }
-
-                      return (
-                        <div key={idx} className={pageClass}>
-                          <textarea
-                            value={pageText}
-                            onChange={(e) => handlePageTextChange(e.target.value)}
-                            disabled={idx !== activePage}
-                            className="w-full flex-1 bg-transparent border-0 outline-none resize-none font-casual text-base leading-7 ruled-bg"
-                            placeholder={`Write notes on page ${idx + 1}...`}
-                            rows={5}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Footer & Turning Controls */}
-                  <div className="flex justify-between items-center mt-3 pt-2 border-t border-dashed border-zinc-300 dark:border-zinc-700 z-10 font-casual text-sm">
-                    <button
-                      onClick={prevPage}
-                      disabled={activePage === 0}
-                      className={`px-2 py-0.5 border border-black dark:border-white rounded transition-all ${
-                        activePage === 0 ? "opacity-30 cursor-not-allowed" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      }`}
-                    >
-                      Flip Back
-                    </button>
-                    
-                    <span className="font-handwriting font-bold">
-                      Page {activePage + 1} / {pages.length}
-                    </span>
-                    
-                    <button
-                      onClick={nextPage}
-                      disabled={activePage === pages.length - 1}
-                      className={`px-2 py-0.5 border border-black dark:border-white rounded transition-all ${
-                        activePage === pages.length - 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                      }`}
-                    >
-                      Flip Page
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <button 
-                onClick={() => setShowStickyNote(true)}
-                className="w-full sketch-btn-secondary py-2 font-handwriting text-sm"
-              >
-                Show Note Journal
-              </button>
-            )}
-
-            {/* Socials & Media Board */}
-            <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)] relative overflow-hidden">
-              <div className="absolute -top-4 -right-4 opacity-10">
-                <svg width="60" height="60" viewBox="0 0 100 100" fill="currentColor">
-                  <path d="M10,60 C20,40 50,40 60,60 C70,40 90,50 90,70 L10,70 Z" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left column: Stats and Announcements */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="sketch-card p-5 bg-yellow-50 dark:bg-yellow-950/20 border-2 border-black dark:border-yellow-700/60 rounded-lg text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-none">
+              <div className="flex justify-center text-yellow-500 mb-2">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
               </div>
+              <div className="font-handwriting text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                {xpCount} XP
+              </div>
+              <div className="text-sm font-casual text-zinc-500 uppercase tracking-wider mt-1.5">
+                Total XP Earned
+              </div>
+            </div>
 
-              <h3 className="text-xl font-bold font-handwriting mb-4">
-                Channels & Socials
-              </h3>
-              
-              <p className="font-casual text-sm text-gray-600 dark:text-zinc-400 mb-4">
-                Watch drawing tutorials, check syllabus webinars, and connect with other creators:
-              </p>
-
-              <div className="space-y-3 font-casual">
-                <a
-                  href="https://youtube.com/@youthlabs"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded border border-black dark:border-white hover:bg-red-50 dark:hover:bg-red-950/20 transition-all group"
-                >
-                  <span className="text-xs font-bold px-2 py-1 bg-red-100 text-red-600 rounded">YT</span>
-                  <div>
-                    <span className="font-bold underline group-hover:text-red-500">YouTube Channel</span>
-                    <div className="text-xs text-gray-400">Online Drawing & Tech Masterclass</div>
-                  </div>
-                </a>
-
-                <a
-                  href="https://x.com/youthlabs"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded border border-black dark:border-white hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all group"
-                >
-                  <span className="text-xs font-bold px-2 py-1 bg-zinc-100 text-zinc-800 rounded">X</span>
-                  <div>
-                    <span className="font-bold underline group-hover:text-sky-500">X / Twitter</span>
-                    <div className="text-xs text-gray-400">@youthlabs_studio</div>
-                  </div>
-                </a>
-
-                <a
-                  href="https://discord.gg/youthlabs"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded border border-black dark:border-white hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all group"
-                >
-                  <span className="text-xs font-bold px-2 py-1 bg-indigo-100 text-indigo-600 rounded">DC</span>
-                  <div>
-                    <span className="font-bold underline group-hover:text-indigo-500">Discord Community</span>
-                    <div className="text-xs text-gray-400">Interact with engineering peers</div>
-                  </div>
-                </a>
+            <div className="sketch-card p-5 bg-emerald-50 dark:bg-emerald-950/20 border-2 border-black dark:border-emerald-700/60 rounded-lg text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-none">
+              <div className="flex justify-center text-emerald-500 mb-2">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.243.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.773-.568-.374-1.81.588-1.81h4.906a1 1 0 00.95-.69l1.519-4.674z" />
+                </svg>
+              </div>
+              <div className="font-handwriting text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                {currentRank}
+              </div>
+              <div className="text-sm font-casual text-zinc-500 uppercase tracking-wider mt-1.5">
+                Leaderboard Rank
               </div>
             </div>
           </div>
+
+          {/* Announcements Card */}
+          <div className="sketch-card p-6 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-none">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-bold font-handwriting flex items-center gap-2.5">
+                <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+                <span>Board Announcements</span>
+              </h3>
+            </div>
+            <div className="space-y-4">
+              {announcements.map((ann, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-md font-casual text-base leading-relaxed bg-zinc-50/50 dark:bg-zinc-800/10"
+                >
+                  {ann}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Next Study Action Banner */}
+          {uipathJourney?.recommended_course && (
+            <div className="sketch-card p-5 bg-amber-50 dark:bg-zinc-900 border-2 border-yellow-500 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="space-y-1">
+                <span className="text-xs uppercase font-bold text-yellow-600 dark:text-yellow-400 font-casual tracking-wider">
+                  Recommended Track
+                </span>
+                <h4 className="text-xl font-bold font-handwriting leading-tight">
+                  {uipathJourney.recommended_course.title}
+                </h4>
+                <p className="text-sm font-casual text-zinc-500 dark:text-zinc-400">
+                  Earn {uipathJourney.recommended_course.xp} XP and a custom badge on completion.
+                </p>
+              </div>
+              <Link
+                href="/student/uipath"
+                className="sketch-btn-primary py-2 px-5 font-handwriting text-base whitespace-nowrap shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+              >
+                Go to Learning Path
+              </Link>
+            </div>
+          )}
         </div>
-      </main>
+
+        {/* Right column: Notepad & Sticky Note */}
+        <div className="space-y-8">
+          {/* Sticky Note widget */}
+          {showStickyNote && (
+            <div className="relative sketch-card p-5 bg-[#FEF08A] text-zinc-850 border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-[-1deg] transition-all hover:rotate-0">
+              <button
+                onClick={() => setShowStickyNote(false)}
+                className="absolute top-2 right-2 text-sm hover:text-red-500 font-bold p-1"
+                title="Dismiss tip"
+              >
+                [x]
+              </button>
+              <h4 className="font-handwriting text-xl font-bold mb-2 flex items-center gap-2 text-zinc-900">
+                <svg className="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.6 19.6L12 12m0 0L4.4 4.4M12 12L4.4 19.6M12 12l7.6-7.6" />
+                </svg>
+                <span>AI Study Tip</span>
+              </h4>
+              <p className="font-casual text-sm leading-relaxed text-zinc-800">
+                {studyTip || "Ask your AI Tutor Chat for help to quiz your understanding of the lecture slides."}
+              </p>
+            </div>
+          )}
+
+          {/* Notebook / Notepad widget */}
+          <div className="sketch-card p-5 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-none flex flex-col justify-between min-h-[340px]">
+            <div>
+              <div className="flex justify-between items-center mb-3 border-b border-zinc-200 dark:border-zinc-800 pb-2">
+                <span className="font-handwriting text-xl font-bold flex items-center gap-2">
+                  <svg className="w-5 h-5 text-[#E75A3D]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>My Notepad</span>
+                </span>
+                <div className="flex items-center gap-3">
+                  <span className="font-casual text-xs text-zinc-400">
+                    Page {activePage + 1} of {pages.length}
+                  </span>
+                  <button
+                    onClick={deletePage}
+                    title="Delete current page"
+                    className="text-zinc-400 hover:text-red-500 transition-colors p-1 rounded"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <textarea
+                value={pages[activePage]}
+                onChange={(e) => handlePageTextChange(e.target.value)}
+                placeholder="Write your class notes, ideas, or reminders here..."
+                className="w-full h-44 bg-transparent border-0 outline-none resize-none font-casual text-lg md:text-xl leading-relaxed placeholder-zinc-450 dark:placeholder-zinc-500"
+              />
+            </div>
+
+            <div className="flex justify-between items-center pt-3 border-t border-dashed border-zinc-200 dark:border-zinc-800">
+              <button
+                onClick={prevPage}
+                disabled={activePage === 0}
+                className="sketch-btn-secondary px-4.5 py-1.5 font-handwriting text-xs disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                ← Prev
+              </button>
+              <button
+                onClick={nextPage}
+                className="sketch-btn-secondary px-4.5 py-1.5 font-handwriting text-xs"
+              >
+                {activePage === pages.length - 1 ? "+ Add Page" : "Next →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

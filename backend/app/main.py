@@ -12,7 +12,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,3 +34,10 @@ async def health():
         "service": "nova-backend",
         "version": settings.APP_VERSION,
     }
+
+@app.on_event("startup")
+async def on_startup():
+    from app.db.session import AsyncSessionLocal
+    from app.db.init_db import init_db
+    async with AsyncSessionLocal() as db:
+        await init_db(db)

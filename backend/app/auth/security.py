@@ -58,17 +58,23 @@ def create_access_token(
 
 def create_refresh_token(
     subject: str,
+    jti: Optional[str] = None,
 ):
+    import uuid
     expire = datetime.now(timezone.utc) + timedelta(days=7)
+    if not jti:
+        jti = str(uuid.uuid4())
 
     payload = {
         "sub": subject,
         "type": "refresh",
+        "jti": jti,
         "exp": expire,
     }
 
-    return jwt.encode(
+    token = jwt.encode(
         payload,
         settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
     )
+    return token, jti

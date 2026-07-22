@@ -1,6 +1,6 @@
 import uuid
-from typing import Optional
-from pydantic import BaseModel, EmailStr
+from typing import Literal, Optional
+from pydantic import BaseModel, EmailStr, Field
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -10,7 +10,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role_name: Optional[str] = "Student"
+    role_name: Optional[Literal["Student", "Lecturer"]] = "Student"
     institution_code: Optional[str] = None
 
 class UserLogin(BaseModel):
@@ -21,6 +21,9 @@ class UserResponse(UserBase):
     id: uuid.UUID
     role_name: Optional[str] = None
     institution_id: Optional[uuid.UUID] = None
+    is_email_verified: bool = False
+    is_onboarded: bool = False
+    reminders_enabled: bool = True
 
     class Config:
         from_attributes = True
@@ -31,6 +34,9 @@ class Token(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(..., min_length=1)
+
 class TokenPayload(BaseModel):
     sub: Optional[str] = None
     role: Optional[str] = None
@@ -39,4 +45,16 @@ class TokenPayload(BaseModel):
     last_name: Optional[str] = None
 
 class GoogleAuthRequest(BaseModel):
-    credential: str
+    id_token: str = Field(..., min_length=1)
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6)
+
+class OnboardingRequest(BaseModel):
+    role_name: Literal["Student", "Lecturer"]
+    institution_code: Optional[str] = None
+

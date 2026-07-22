@@ -44,6 +44,18 @@ async def list_courses(
     result = await db.execute(select(Course))
     return result.scalars().all()
 
+@router.get("/enrolled", response_model=List[CourseResponse])
+async def list_enrolled_courses(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Course)
+        .join(Enrollment, Course.id == Enrollment.course_id)
+        .where(Enrollment.student_id == current_user.id)
+    )
+    return result.scalars().all()
+
 @router.post("/enroll", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
 async def enroll_course(
     course_id_in: str,
@@ -79,3 +91,129 @@ async def enroll_course(
     await db.commit()
     await db.refresh(enrollment)
     return enrollment
+
+@router.get("/announcements", response_model=List[str])
+async def get_announcements(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    from app.models.resource import Resource
+    from app.core.config import settings
+    from openai import AsyncOpenAI
+    
+    announcements = []
+    
+    # 1. Fetch user's enrolled courses
+    enr_result = await db.execute(
+        select(Enrollment).where(Enrollment.student_id == current_user.id)
+    )
+    enrollments = enr_result.scalars().all()
+    course_ids = [e.course_id for e in enrollments]
+    
+    if course_ids:
+        # Fetch resources for these courses (latest 3 resources)
+        res_result = await db.execute(
+            select(Resource, Course)
+            .join(Course, Resource.course_id == Course.id)
+            .where(Resource.course_id.in_(course_ids))
+            .order_by(Resource.created_at.desc())
+            .limit(3)
+        )
+        for resource, course in res_result.all():
+            announcements.append(
+                f"New materials for {course.code} ({resource.file_name}) have been uploaded and indexed."
+            )
+            
+    # 2. If we need more announcements, let the AI generate one!
+    if len(announcements) < 3:
+        ai_announcement = None
+        use_groq = bool(settings.GROQ_API_KEY)
+        use_openrouter = bool(settings.OPENROUTER_API_KEY)
+        
+        system_prompt = (
+            "You are N.O.V.A., an AI educational assistant. "
+            "Generate a single, short, encouraging 1-sentence announcement, study tip, or motivation for a student log-in dashboard. "
+            "Keep it under 15 words. Do not use quotes or prefixes."
+        )
+        
+        if use_groq:
+            try:
+                groq_client = AsyncOpenAI(api_key=settings.GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+                response = await groq_client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "system", "content": system_prompt}],
+                    temperature=0.7,
+                    max_tokens=30
+                )
+                ai_announcement = response.choices[0].message.content.strip()
+            except:
+                pass
+                
+        if not ai_announcement and use_openrouter:
+            try:
+                openrouter_client = AsyncOpenAI(api_key=settings.OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1")
+                response = await openrouter_client.chat.completions.create(
+                    model="meta-llama/llama-3.1-8b-instruct:free",
+                    messages=[{"role": "system", "content": system_prompt}],
+                    temperature=0.7,
+                    max_tokens=30
+                )
+                ai_announcement = response.choices[0].message.content.strip()
+            except:
+                pass
+                
+        if ai_announcement:
+            announcements.append(ai_announcement)
+        else:
+            announcements.append("Welcome to N.O.V.A! Your AI assistant is fully grounded in your slides.")
+            
+    if len(announcements) < 2:
+        announcements.append("Stay curious and keep exploring your courses!")
+        
+    return announcements
+
+@router.get("/study-tip", response_model=dict)
+async def get_ai_study_tip(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    from app.core.config import settings
+    from openai import AsyncOpenAI
+    
+    use_groq = bool(settings.GROQ_API_KEY)
+    use_openrouter = bool(settings.OPENROUTER_API_KEY)
+    
+    system_prompt = (
+        "You are N.O.V.A., an AI educational assistant. "
+        "Generate a single, highly actionable, encouraging study tip or memory technique for a college student. "
+        "Keep it under 25 words. Do not use quotes or prefixes. Be direct."
+    )
+    
+    tip = "Break your study sessions into 25-minute blocks using the Pomodoro technique to stay focused."
+    
+    if use_groq:
+        try:
+            groq_client = AsyncOpenAI(api_key=settings.GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+            response = await groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "system", "content": system_prompt}],
+                temperature=0.8,
+                max_tokens=40
+            )
+            tip = response.choices[0].message.content.strip()
+        except:
+            pass
+    elif use_openrouter:
+        try:
+            openrouter_client = AsyncOpenAI(api_key=settings.OPENROUTER_API_KEY, base_url="https://openrouter.ai/api/v1")
+            response = await openrouter_client.chat.completions.create(
+                model="meta-llama/llama-3.1-8b-instruct:free",
+                messages=[{"role": "system", "content": system_prompt}],
+                temperature=0.8,
+                max_tokens=40
+            )
+            tip = response.choices[0].message.content.strip()
+        except:
+            pass
+            
+    return {"tip": tip}

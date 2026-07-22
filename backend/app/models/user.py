@@ -39,6 +39,9 @@ class User(Base):
     status: Mapped[str] = mapped_column(String(20), default="Active")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_onboarded: Mapped[bool] = mapped_column(Boolean, default=False)
+    reminders_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -56,3 +59,11 @@ class User(Base):
     portfolio: Mapped[Optional["Portfolio"]] = relationship(back_populates="user", uselist=False)
     notifications: Mapped[List["Notification"]] = relationship(back_populates="user")
     audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="user")
+
+class RevokedToken(Base):
+    __tablename__ = "revoked_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    jti: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+

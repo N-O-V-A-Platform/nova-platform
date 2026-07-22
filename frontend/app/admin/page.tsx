@@ -3,15 +3,11 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { authService, PendingLecturer } from "@/services/auth";
 import { useRouter } from "next/navigation";
 
-interface PendingLecturer {
-  id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  role_name: string;
-  status: string;
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong.";
 }
 
 export default function AdminPage() {
@@ -26,18 +22,14 @@ export default function AdminPage() {
     if (!authLoading && (!user || user.role_name !== "Admin")) {
       router.push("/login");
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
 
   const fetchPending = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/v1/admin/pending-lecturers");
-      if (!response.ok) {
-        throw new Error("Failed to load requests.");
-      }
-      const data = await response.json();
+      const data = await authService.getPendingLecturers();
       setLecturers(data);
-    } catch (err: any) {
-      setError(err.message || "Could not connect to the backend.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -46,7 +38,28 @@ export default function AdminPage() {
   useEffect(() => {
     document.documentElement.classList.remove("dark");
     if (user && user.role_name === "Admin") {
-      fetchPending();
+      let active = true;
+      authService
+        .getPendingLecturers()
+        .then((data) => {
+          if (active) {
+            setLecturers(data);
+          }
+        })
+        .catch((err: unknown) => {
+          if (active) {
+            setError(getErrorMessage(err));
+          }
+        })
+        .finally(() => {
+          if (active) {
+            setLoading(false);
+          }
+        });
+
+      return () => {
+        active = false;
+      };
     }
   }, [user]);
 
@@ -54,18 +67,13 @@ export default function AdminPage() {
     setMessage("");
     setError("");
     try {
-      const response = await fetch(
-        `http://localhost:8000/api/v1/admin/${action}-lecturer/${id}`,
-        { method: "POST" }
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} request.`);
-      }
-      const result = await response.json();
+      const result = action === "approve"
+        ? await authService.approveLecturer(id)
+        : await authService.rejectLecturer(id);
       setMessage(result.message);
       fetchPending();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     }
   };
 

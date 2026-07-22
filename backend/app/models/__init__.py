@@ -7,7 +7,7 @@ from app.models.notification import Notification
 from app.models.quiz import Quiz, QuizAttempt
 from app.models.resource import KnowledgeBase, Resource
 from app.models.skills import Badge, Certificate, Portfolio, SkillPassport
-from app.models.user import Permission, Role, User
+from app.models.user import Permission, Role, User, RevokedToken
 from app.models.workflow import Workflow
 
 __all__ = [
@@ -29,6 +29,7 @@ __all__ = [
     "Quiz",
     "QuizAttempt",
     "Resource",
+    "RevokedToken",
     "Role",
     "SkillPassport",
     "User",
