@@ -5,9 +5,33 @@ import Mascot from "./Mascot";
 
 export default function SplashLoader() {
   const [loaderWidth, setLoaderWidth] = useState("0%");
+  const [animationClass, setAnimationClass] = useState("animate-mascot-fly");
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaderWidth("100%"), 80);
+
+    // Track refreshes and select mascot animation style every 15 refreshes
+    if (typeof window !== "undefined") {
+      try {
+        const storedCount = localStorage.getItem("nova_refresh_count");
+        const currentCount = storedCount ? parseInt(storedCount, 10) : 0;
+        const newCount = currentCount + 1;
+        localStorage.setItem("nova_refresh_count", newCount.toString());
+
+        // Calculate animation cycle index (0 = fly-through, 1 = orbit, 2 = dash/rocket)
+        const animationIndex = Math.floor((newCount / 15) % 3);
+        if (animationIndex === 1) {
+          setAnimationClass("animate-mascot-orbit");
+        } else if (animationIndex === 2) {
+          setAnimationClass("animate-mascot-dash");
+        } else {
+          setAnimationClass("animate-mascot-fly");
+        }
+      } catch (e) {
+        console.warn("Failed to access localStorage for refresh counter:", e);
+      }
+    }
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -15,7 +39,7 @@ export default function SplashLoader() {
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF6EE] text-[#1E1E1E] transition-colors duration-200">
       <div className="text-center space-y-6 flex flex-col items-center">
         {/* Custom Animated Mascot */}
-        <Mascot className="w-36 h-36 md:w-44 md:h-44 animate-mascot-fly" />
+        <Mascot className={`w-36 h-36 md:w-44 md:h-44 ${animationClass}`} />
         
         <div className="space-y-2">
           <h1 className="text-5xl md:text-6xl font-bold font-handwriting tracking-wide">

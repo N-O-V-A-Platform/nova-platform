@@ -330,3 +330,51 @@ input, select, textarea, button {
   opacity: 0;
   pointer-events: none;
 }
+
+/* Custom Loading Animations for Mascot Rotation */
+@keyframes mascot-orbit {
+  0% {
+    transform: translate3d(-100vw, -100vh, 0) scale(0.4) rotate(0deg);
+  }
+  35% {
+    transform: translate3d(-10vw, -10vh, 0) scale(1) rotate(180deg);
+  }
+  55% {
+    transform: translate3d(15px, -30px, 0) scale(1.1) rotate(270deg);
+  }
+  75% {
+    transform: translate3d(-10px, 15px, 0) scale(0.9) rotate(360deg);
+  }
+  85% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(360deg);
+  }
+  100% {
+    transform: translate3d(100vw, 100vh, 0) scale(0.4) rotate(720deg);
+  }
+}
+
+.animate-mascot-orbit {
+  animation: mascot-orbit 2.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes mascot-dash {
+  0% {
+    transform: translate3d(0, 120vh, 0) scale(0.6) rotate(45deg);
+  }
+  40% {
+    transform: translate3d(0, 0, 0) scale(1.1) rotate(-10deg);
+  }
+  60% {
+    transform: translate3d(0, -30px, 0) scale(1.15) rotate(10deg);
+  }
+  75% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, -120vh, 0) scale(0.6) rotate(-45deg);
+  }
+}
+
+.animate-mascot-dash {
+  animation: mascot-dash 2.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
