@@ -105,8 +105,11 @@ export const authService = {
     }
 
     const resData: TokenResponse = await response.json();
-    this.setToken(resData.access_token);
-    this.setRefreshToken(resData.refresh_token);
+    // Only store tokens if they are non-empty (email verification flow returns empty tokens)
+    if (resData.access_token) {
+      this.setToken(resData.access_token);
+      this.setRefreshToken(resData.refresh_token);
+    }
     return resData;
   },
 

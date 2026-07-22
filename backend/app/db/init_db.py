@@ -1,3 +1,4 @@
+import os
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -60,7 +61,7 @@ async def init_db(db: AsyncSession) -> None:
             email="uipath.lecturer@nova.edu",
             first_name="UiPath",
             last_name="Instructor",
-            password_hash=get_password_hash("uipath123"),
+            password_hash=get_password_hash(os.getenv("SEED_LECTURER_PASSWORD", uuid.uuid4().hex)),
             role_id=role_map["Lecturer"].id,
             institution_id=institution.id,
             is_active=True,

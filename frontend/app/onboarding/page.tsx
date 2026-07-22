@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import SplashLoader from "@/app/components/SplashLoader";
 
 export default function OnboardingPage() {
   const { user, loading, onboard, logout } = useAuth();
@@ -50,11 +51,7 @@ export default function OnboardingPage() {
   };
 
   if (loading || !user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center font-handwriting text-2xl bg-[#FAF6EE] text-[#1E1E1E]">
-        Loading your sketch profile...
-      </div>
-    );
+    return <SplashLoader />;
   }
 
   return (

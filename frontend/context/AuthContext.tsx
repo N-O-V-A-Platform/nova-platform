@@ -109,6 +109,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const res = await authService.register(data);
+
+      // If access_token is empty, registration succeeded but email verification is required
+      if (!res.access_token) {
+        setLoading(false);
+        // Don't store tokens or set user — let the register page show the success message
+        return;
+      }
+
       setUser(res.user);
       setLoading(false);
       

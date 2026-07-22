@@ -37,7 +37,7 @@ export default function RegisterPage() {
         role_name: roleName,
         institution_code: institutionCode.trim() || null
       });
-      setSuccessMsg("Registration successful! Please check your console/email for the verification link.");
+      setSuccessMsg("Welcome to N.O.V.A.! A verification email has been sent to your inbox. Please check your email and click the verification link to activate your account.");
     } catch (err: any) {
       setError(err.message || "Registration failed");
     } finally {

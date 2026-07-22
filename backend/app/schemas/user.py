@@ -9,7 +9,7 @@ class UserBase(BaseModel):
     status: str = "Active"
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(..., min_length=6)
     role_name: Optional[Literal["Student", "Lecturer"]] = "Student"
     institution_code: Optional[str] = None
 

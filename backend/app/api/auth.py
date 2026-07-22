@@ -125,30 +125,48 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     if not is_email_verified:
         # Generate verification token
-        expire = datetime.utcnow() + timedelta(hours=24)
+        expire = datetime.now(timezone.utc) + timedelta(hours=24)
         verification_token = jwt.encode(
             {"sub": user.email, "type": "email_verification", "exp": expire},
             settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM
         )
-        # Send themed verification email
+        # Send themed verification email with UiPath welcome context
         from app.core.email import send_themed_email
         send_themed_email(
             to_email=user.email,
-            subject="Verify Your N.O.V.A. Account",
-            title="Account Verification",
+            subject="Welcome to N.O.V.A. — Verify Your Account",
+            title="Welcome to the N.O.V.A. Community",
             greeting=f"Hello {user.first_name}!",
-            body_text="Welcome to N.O.V.A.! To finalize your registration, please verify your email address by clicking the button below. This link expires in 24 hours.",
+            body_text=(
+                "Welcome to N.O.V.A. — your Next-gen Optimized Virtual Assistant for modern learning! "
+                "You are joining a community of learners focused on mastering UiPath RPA and Intelligent Automation. "
+                "N.O.V.A. offers structured UiPath Academy courses, AI-powered study assistants, certificate tracking, "
+                "and a personalized learning journey — all inside a beautiful, interactive classroom experience.\n\n"
+                "To get started, please verify your email address by clicking the button below. "
+                "This link expires in 24 hours. Once verified, you can log in and begin your first UiPath learning path right away."
+            ),
             action_text="Verify My Account",
             action_url=f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
         )
 
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration successful! An email verification link has been printed to the console. Please verify your email before logging in."
+        return Token(
+            access_token="",
+            refresh_token="",
+            user=UserResponse(
+                id=user.id,
+                email=user.email,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                role_name=role_name,
+                institution_id=user.institution_id,
+                is_email_verified=False,
+                is_onboarded=user.is_onboarded,
+                status="Email Verification Required"
+            )
         )
 
     if not is_active:
@@ -197,7 +215,19 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     )
     user = result.scalars().first()
     
-    if not user or not verify_password(credentials.password, user.password_hash):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect email or password"
+        )
+
+    if not user.password_hash or not verify_password(credentials.password, user.password_hash):
+        # Check if this is a Google-only account (random uuid password)
+        if user.is_email_verified and not user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This account was created with Google Sign-In. Please use the Google button to log in."
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect email or password"
@@ -283,7 +313,7 @@ async def refresh_token(payload: RefreshTokenRequest, db: AsyncSession = Depends
     # Blacklist the old token jti
     from datetime import datetime, timezone
     exp_timestamp = token_data.get("exp")
-    expires_at = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc).replace(tzinfo=None) if exp_timestamp else datetime.utcnow()
+    expires_at = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc).replace(tzinfo=None) if exp_timestamp else datetime.now(timezone.utc).replace(tzinfo=None)
     revoked = RevokedToken(jti=token_data["jti"], expires_at=expires_at)
     db.add(revoked)
 
@@ -557,8 +587,8 @@ async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Dep
         return {"message": "If the email exists, a password reset link has been printed to the console."}
 
     # Generate password reset token
-    from datetime import datetime, timedelta
-    expire = datetime.utcnow() + timedelta(minutes=15)
+    from datetime import datetime, timedelta, timezone
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     reset_token = jwt.encode(
         {"sub": user.email, "type": "password_reset", "exp": expire},
         settings.JWT_SECRET_KEY,
@@ -577,7 +607,7 @@ async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Dep
         action_url=f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
     )
 
-    return {"message": "Password reset link sent.", "token": reset_token}
+    return {"message": "If an account with that email exists, a password reset link has been sent."}
 
 
 @router.post("/reset-password")
@@ -604,7 +634,7 @@ async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depen
     user = result.scalars().first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_444_NOT_RESPONSE_NOT_FOUND if hasattr(status, "HTTP_444_NOT_RESPONSE_NOT_FOUND") else 404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
 
