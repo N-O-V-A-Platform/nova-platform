@@ -19,7 +19,7 @@ export default function SplashLoader() {
         const newCount = currentCount + 1;
         localStorage.setItem("nova_refresh_count", newCount.toString());
 
-        // Cycle through all 7 animations every 7 refreshes
+        // Different animation on every single refresh, cycling through all 7
         const animations = [
           "animate-mascot-fly",
           "animate-mascot-orbit",
@@ -29,7 +29,7 @@ export default function SplashLoader() {
           "animate-mascot-bounce",
           "animate-mascot-zoom"
         ];
-        const animationIndex = Math.floor((newCount / 7) % animations.length);
+        const animationIndex = newCount % animations.length;
         setAnimationClass(animations[animationIndex]);
 
         // Trigger funny speech bubble message every 5th refresh
