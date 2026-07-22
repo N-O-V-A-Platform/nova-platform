@@ -35,12 +35,12 @@ export default function SplashLoader() {
         // Trigger funny speech bubble message every 5th refresh
         if (newCount % 5 === 0) {
           const jokes = [
-            "Refreshing again? 🕵️‍♂️ Slow internet connection?",
-            "Maybe you should borrow your friend's hotspot? 📶",
-            `This is refresh number ${newCount}... is your router taking a nap? 💤`,
-            "Clicking reload won't make my code compile faster! 😅",
-            "Hang in there, N.O.V.A. is working overtime! 🚀",
-            "Are we having connection issues, or are you just testing my animations? 🤔"
+            "Refreshing again? Slow internet connection?",
+            "Maybe you should borrow your friend's hotspot?",
+            `This is refresh number ${newCount}... is your router taking a nap?`,
+            "Clicking reload won't make my code compile faster!",
+            "Hang in there, N.O.V.A. is working overtime!",
+            "Are we having connection issues, or are you just testing my animations?"
           ];
           const jokeIndex = Math.floor((newCount / 5) - 1) % jokes.length;
           setFunnyMessage(jokes[jokeIndex]);

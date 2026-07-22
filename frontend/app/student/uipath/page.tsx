@@ -108,7 +108,7 @@ export default function UiPathJourneyPage() {
             onClick={toggleTheme}
             className="sketch-btn-secondary px-4 py-2 font-handwriting text-sm"
           >
-            {theme === "light" ? "💡 Dark Board" : "☀️ Light Board"}
+            {theme === "light" ? "Dark Board" : "Light Board"}
           </button>
         </div>
       </header>
