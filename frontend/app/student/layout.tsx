@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import SplashLoader from "@/app/components/SplashLoader";
 
 interface StudentLayoutProps {
   children: React.ReactNode;
@@ -29,11 +30,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
   }, [user, loading, router]);
 
   if (loading || !user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center font-handwriting text-2xl bg-[#FAF6EE] text-[#1E1E1E]">
-        Loading your blackboard...
-      </div>
-    );
+    return <SplashLoader />;
   }
 
   // Navigation items config

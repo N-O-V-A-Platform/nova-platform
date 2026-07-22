@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Patrick+Hand&family=Caveat:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -32,13 +31,13 @@ body {
     linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   background-size: 32px 32px;
   color: var(--foreground);
-  font-family: 'Patrick Hand', 'Inter', sans-serif;
+  font-family: var(--font-patrick-hand), 'Patrick Hand', 'Inter', sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh;
 }
 
 input, select, textarea, button {
-  font-family: 'Patrick Hand', 'Inter', sans-serif;
+  font-family: var(--font-patrick-hand), 'Patrick Hand', 'Inter', sans-serif;
 }
 
 .dark body {
@@ -155,15 +154,15 @@ input, select, textarea, button {
 
 /* Custom Handwriting Fonts */
 .font-handwriting {
-  font-family: 'Architects Daughter', cursive;
+  font-family: var(--font-architects-daughter), 'Architects Daughter', cursive;
 }
 
 .font-casual {
-  font-family: 'Patrick Hand', cursive;
+  font-family: var(--font-patrick-hand), 'Patrick Hand', cursive;
 }
 
 .font-chalk {
-  font-family: 'Caveat', cursive;
+  font-family: var(--font-caveat), 'Caveat', cursive;
 }
 
 /* Neubrutalist Sketch Styles */
