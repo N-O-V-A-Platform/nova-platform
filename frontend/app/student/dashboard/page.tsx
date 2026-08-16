@@ -244,21 +244,21 @@ export default function StudentDashboardOverview() {
         <div className="space-y-8">
           {/* Sticky Note widget */}
           {showStickyNote && (
-            <div className="relative sketch-card p-5 !bg-[#FEF08A] text-zinc-900 dark:text-zinc-900 border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-[-1deg] transition-all hover:rotate-0">
+            <div className="relative sketch-card p-5 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-none rotate-[-1deg] transition-all hover:rotate-0">
               <button
                 onClick={() => setShowStickyNote(false)}
-                className="absolute top-2 right-2 text-sm text-zinc-650 dark:text-zinc-650 hover:text-red-500 font-bold p-1"
+                className="absolute top-2 right-2 text-sm text-zinc-400 dark:text-zinc-500 hover:text-red-500 font-bold p-1"
                 title="Dismiss tip"
               >
                 [x]
               </button>
-              <h4 className="font-handwriting text-xl font-bold mb-2 flex items-center gap-2 text-zinc-900 dark:text-zinc-900">
-                <svg className="w-5 h-5 text-amber-700 dark:text-amber-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <h4 className="font-handwriting text-xl font-bold mb-2 flex items-center gap-2 text-zinc-900 dark:text-white">
+                <svg className="w-5 h-5 text-[#E75A3D] dark:text-orange-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.6 19.6L12 12m0 0L4.4 4.4M12 12L4.4 19.6M12 12l7.6-7.6" />
                 </svg>
                 <span>AI Study Tip</span>
               </h4>
-              <p className="font-casual text-sm leading-relaxed text-zinc-800 dark:text-zinc-800">
+              <p className="font-casual text-base leading-relaxed text-zinc-650 dark:text-zinc-300">
                 {studyTip || "Ask your AI Tutor Chat for help to quiz your understanding of the lecture slides."}
               </p>
             </div>

@@ -283,11 +283,11 @@ export default function LecturerDashboard() {
             </div>
 
             {/* Quick reminders card */}
-            <div className="sketch-card p-6 !bg-[#FEF08A] !dark:bg-yellow-950/20 text-[#1E293B] dark:text-[#E2E8F0]">
-              <h3 className="text-lg font-bold font-handwriting mb-3">
+            <div className="sketch-card p-6 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100">
+              <h3 className="text-lg font-bold font-handwriting mb-3 text-zinc-900 dark:text-white">
                 Teaching Reminders
               </h3>
-              <ul className="list-disc list-inside font-casual space-y-2 text-sm">
+              <ul className="list-disc list-inside font-casual space-y-2 text-sm text-zinc-650 dark:text-zinc-300">
                 <li>Check your escalations list daily.</li>
                 <li>Upload new PDFs to sync the RAG database.</li>
                 <li>Verify students' RAG accuracy via analytics.</li>
