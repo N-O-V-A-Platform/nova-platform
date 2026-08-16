@@ -225,7 +225,7 @@ export default function StudentCertificatesPage() {
                 setCertVerificationUrl("");
                 setCertVerificationId("");
               }}
-              className="absolute top-4 right-4 text-sm bg-zinc-200 dark:bg-zinc-700 border-0 hover:text-red-500 rounded px-2.5 py-1 font-bold"
+              className="absolute top-4 right-4 text-sm bg-zinc-100 hover:bg-red-100 dark:bg-zinc-800 dark:hover:bg-red-950/40 text-zinc-700 dark:text-zinc-300 hover:text-red-650 dark:hover:text-red-400 border-2 border-black dark:border-zinc-700 rounded px-2.5 py-1 font-bold font-handwriting transition-colors"
             >
               [x]
             </button>
@@ -235,51 +235,51 @@ export default function StudentCertificatesPage() {
             
             <div className="space-y-5 font-casual text-sm md:text-base">
               <div>
-                <span className="font-bold block mb-1">Course Title</span>
-                <div className="bg-zinc-50 dark:bg-zinc-850 p-2.5 rounded border border-zinc-200 dark:border-zinc-700 text-sm font-semibold">
+                <span className="font-bold block mb-1 text-zinc-800 dark:text-zinc-200 font-handwriting text-lg">Course Title</span>
+                <div className="bg-zinc-100 dark:bg-zinc-800 p-2.5 rounded border-2 border-zinc-300 dark:border-zinc-700 text-sm font-semibold text-zinc-800 dark:text-zinc-200 font-casual">
                   {selectedCertCourse.title}
                 </div>
               </div>
 
               <div>
-                <span className="font-bold block mb-1.5">Date of Completion</span>
+                <span className="font-bold block mb-1.5 text-zinc-800 dark:text-zinc-200 font-handwriting text-lg">Date of Completion</span>
                 <input
                   type="date"
                   value={certCompletionDate}
                   onChange={(e) => setCertCompletionDate(e.target.value)}
-                  className="w-full p-2.5 bg-transparent border-2 border-black dark:border-white rounded-md text-sm md:text-base"
+                  className="sketch-input w-full text-base font-casual"
                 />
               </div>
 
               <div>
-                <span className="font-bold block mb-1.5">Certificate Verification URL</span>
+                <span className="font-bold block mb-1.5 text-zinc-800 dark:text-zinc-200 font-handwriting text-lg">Certificate Verification URL</span>
                 <input
                   type="url"
                   required
                   placeholder="https://academy.uipath.com/certificates/validate/..."
                   value={certVerificationUrl}
                   onChange={(e) => setCertVerificationUrl(e.target.value)}
-                  className="w-full p-2.5 bg-transparent border-2 border-black dark:border-white rounded-md text-sm md:text-base"
+                  className="sketch-input w-full text-base font-casual"
                 />
-                <span className="text-xs text-gray-400 mt-1 block">Must start with academy.uipath.com or credentials.uipath.com</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 block font-casual">Must start with academy.uipath.com or credentials.uipath.com</span>
               </div>
 
               <div>
-                <span className="font-bold block mb-1.5">Certificate ID (Optional)</span>
+                <span className="font-bold block mb-1.5 text-zinc-800 dark:text-zinc-200 font-handwriting text-lg">Certificate ID (Optional)</span>
                 <input
                   type="text"
                   placeholder="e.g. UI-928374-AC"
                   value={certVerificationId}
                   onChange={(e) => setCertVerificationId(e.target.value)}
-                  className="w-full p-2.5 bg-transparent border-2 border-black dark:border-white rounded-md text-sm md:text-base"
+                  className="sketch-input w-full text-base font-casual"
                 />
               </div>
 
               {certMsg && (
-                <p className="text-emerald-600 dark:text-emerald-400 text-sm font-bold">{certMsg}</p>
+                <p className="text-emerald-600 dark:text-emerald-400 text-sm font-bold font-casual">{certMsg}</p>
               )}
               {certError && (
-                <p className="text-rose-600 dark:text-rose-400 text-sm font-bold">{certError}</p>
+                <p className="text-rose-600 dark:text-rose-400 text-sm font-bold font-casual">{certError}</p>
               )}
 
               <button
