@@ -162,13 +162,13 @@ export default function StudentSettingsPage() {
                 <select
                   value={dailyGoalHours}
                   onChange={(e) => setDailyGoalHours(e.target.value)}
-                  className="p-2.5 bg-transparent border-2 border-black dark:border-white rounded-md text-sm md:text-base"
+                  className="sketch-input w-full text-base font-casual !bg-white dark:!bg-zinc-900 text-zinc-900 dark:text-zinc-100"
                 >
-                  <option value="0.5">30 Minutes / day</option>
-                  <option value="1.0">1 Hour / day</option>
-                  <option value="1.5">1.5 Hours / day</option>
-                  <option value="2.0">2 Hours / day</option>
-                  <option value="3.0">3+ Hours / day</option>
+                  <option value="0.5" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">30 Minutes / day</option>
+                  <option value="1.0" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">1 Hour / day</option>
+                  <option value="1.5" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">1.5 Hours / day</option>
+                  <option value="2.0" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">2 Hours / day</option>
+                  <option value="3.0" className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">3+ Hours / day</option>
                 </select>
               </div>
 
@@ -238,7 +238,7 @@ export default function StudentSettingsPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-2.5 bg-transparent border-2 border-black dark:border-white rounded-md text-sm md:text-base"
+                  className="sketch-input w-full text-base font-casual"
                   placeholder="••••••••"
                 />
               </div>
@@ -250,7 +250,7 @@ export default function StudentSettingsPage() {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full p-2.5 bg-transparent border-2 border-black dark:border-white rounded-md text-sm md:text-base"
+                  className="sketch-input w-full text-base font-casual"
                   placeholder="••••••••"
                 />
               </div>
