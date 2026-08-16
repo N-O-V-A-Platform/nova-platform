@@ -24,16 +24,23 @@ export default function StudentCoursesPage() {
   const [loadingResources, setLoadingResources] = useState(false);
   const [enrollMsg, setEnrollMsg] = useState("");
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (newEnrollId?: string) => {
     try {
       const allCourses = (await authService.getCourses()) as unknown as Course[];
       const enrolled = (await authService.getEnrolledCourses()) as unknown as Course[];
-      
+
       setCourses(enrolled);
-      
+
       const enrolledIds = new Set(enrolled.map((c) => c.id));
       const available = allCourses.filter((c) => !enrolledIds.has(c.id));
       setAvailableCourses(available);
+
+      if (newEnrollId) {
+        const newlyEnrolled = enrolled.find((c) => c.id === newEnrollId);
+        if (newlyEnrolled) {
+          handleViewDetails(newlyEnrolled);
+        }
+      }
     } catch (err) {
       console.error("Failed to load courses:", err);
       // Fallback
@@ -58,11 +65,11 @@ export default function StudentCoursesPage() {
     try {
       setEnrollMsg("");
       await authService.enrollCourse(courseId);
-      setEnrollMsg("Enrolled successfully! Updating courses...");
+      setEnrollMsg("Enrolled successfully! Opening course materials...");
       setTimeout(() => {
-        fetchCourses();
+        fetchCourses(courseId);
         setEnrollMsg("");
-      }, 1500);
+      }, 1000);
     } catch (err: any) {
       setEnrollMsg(`Enrollment failed: ${err.message}`);
     }
@@ -121,16 +128,15 @@ export default function StudentCoursesPage() {
               </svg>
               <span>Enrolled Classes ({courses.length})</span>
             </h3>
-            
+
             <div className="space-y-5">
               {courses.map((course) => (
                 <div
                   key={course.id}
-                  className={`p-5 border-2 rounded-lg transition-all flex justify-between items-center ${
-                    selectedCourse?.id === course.id
+                  className={`p-5 border-2 rounded-lg transition-all flex justify-between items-center ${selectedCourse?.id === course.id
                       ? "border-[#E75A3D] bg-orange-50/10"
                       : "border-black dark:border-zinc-800"
-                  }`}
+                    }`}
                 >
                   <div>
                     <div className="flex items-center gap-2.5">

@@ -58,10 +58,10 @@ function VerifyEmailContent() {
           <p className="text-sm font-casual text-zinc-700">{message}</p>
           <div className="pt-2">
             <Link
-              href="/login"
+              href="/"
               className="inline-block py-2 px-6 bg-[#E75A3D] text-white border-2 border-black font-handwriting text-lg rounded-md hover:bg-orange-600 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
             >
-              Go to Login
+              Go to Dashboard
             </Link>
           </div>
         </div>

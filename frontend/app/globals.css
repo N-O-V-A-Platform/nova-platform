@@ -435,3 +435,23 @@ a, button, [role='button'], input, select, textarea, label, .cursor-pointer {
 .animate-mascot-zoom {
   animation: mascot-zoom 2.3s ease-in-out forwards;
 }
+
+@keyframes slide-right {
+  0% {
+    transform: translateX(-50px) scale(0.9);
+    filter: blur(2px);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(8px) scale(1.03);
+    filter: none;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-right {
+  animation: slide-right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}

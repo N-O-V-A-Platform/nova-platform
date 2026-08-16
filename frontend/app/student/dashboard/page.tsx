@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth";
 import Link from "next/link";
+import Leaderboard from "@/components/Leaderboard";
 
 export default function StudentDashboardOverview() {
   const { user } = useAuth();
@@ -14,6 +15,8 @@ export default function StudentDashboardOverview() {
   const [announcements, setAnnouncements] = useState<string[]>([]);
   const [uipathJourney, setUipathJourney] = useState<any>(null);
   const [studyTip, setStudyTip] = useState("");
+  const [realRank, setRealRank] = useState<string>("Loading...");
+  const [realXp, setRealXp] = useState<number>(0);
 
   // Notepad state: dynamic notebook
   const [pages, setPages] = useState<string[]>(["", "", ""]);
@@ -95,8 +98,21 @@ export default function StudentDashboardOverview() {
     try {
       const journeyData = await authService.getUiPathJourney();
       setUipathJourney(journeyData);
+
+      // Fetch real rank & XP from leaderboard
+      const lb = await authService.getLeaderboard();
+      const me = lb.find(x => x.user_id === user?.id);
+      if (me) {
+        setRealRank(`#${me.rank}`);
+        setRealXp(me.xp);
+      } else {
+        setRealRank("Unranked");
+        setRealXp(0);
+      }
     } catch (err) {
-      console.error("Failed to load UiPath data:", err);
+      console.error("Failed to load UiPath/Leaderboard data:", err);
+      setRealRank("Unranked");
+      setRealXp(0);
     }
   };
 
@@ -119,10 +135,8 @@ export default function StudentDashboardOverview() {
     }
   }, [user]);
 
-  const xpCount = uipathJourney ? uipathJourney.completed_count * 200 : 0;
-  const currentRank = uipathJourney && uipathJourney.completed_count > 0 
-    ? `#${Math.max(1, 20 - uipathJourney.completed_count * 2)}` 
-    : "Unranked";
+  const xpCount = realXp;
+  const currentRank = realRank;
 
   return (
     <div className="space-y-8">
@@ -191,13 +205,16 @@ export default function StudentDashboardOverview() {
               {announcements.map((ann, idx) => (
                 <div
                   key={idx}
-                  className="p-4 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-md font-casual text-base leading-relaxed bg-zinc-50/50 dark:bg-zinc-800/10"
+                  className="p-4 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-md font-casual text-base leading-relaxed bg-zinc-50/50 dark:bg-zinc-800/10 text-zinc-700 dark:text-zinc-300"
                 >
                   {ann}
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Leaderboard Card */}
+          <Leaderboard />
 
           {/* Next Study Action Banner */}
           {uipathJourney?.recommended_course && (
@@ -227,21 +244,21 @@ export default function StudentDashboardOverview() {
         <div className="space-y-8">
           {/* Sticky Note widget */}
           {showStickyNote && (
-            <div className="relative sketch-card p-5 bg-[#FEF08A] text-zinc-850 border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-[-1deg] transition-all hover:rotate-0">
+            <div className="relative sketch-card p-5 !bg-[#FEF08A] text-zinc-900 dark:text-zinc-900 border-2 border-black rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-[-1deg] transition-all hover:rotate-0">
               <button
                 onClick={() => setShowStickyNote(false)}
-                className="absolute top-2 right-2 text-sm hover:text-red-500 font-bold p-1"
+                className="absolute top-2 right-2 text-sm text-zinc-650 dark:text-zinc-650 hover:text-red-500 font-bold p-1"
                 title="Dismiss tip"
               >
                 [x]
               </button>
-              <h4 className="font-handwriting text-xl font-bold mb-2 flex items-center gap-2 text-zinc-900">
-                <svg className="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <h4 className="font-handwriting text-xl font-bold mb-2 flex items-center gap-2 text-zinc-900 dark:text-zinc-900">
+                <svg className="w-5 h-5 text-amber-700 dark:text-amber-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.6 19.6L12 12m0 0L4.4 4.4M12 12L4.4 19.6M12 12l7.6-7.6" />
                 </svg>
                 <span>AI Study Tip</span>
               </h4>
-              <p className="font-casual text-sm leading-relaxed text-zinc-800">
+              <p className="font-casual text-sm leading-relaxed text-zinc-800 dark:text-zinc-800">
                 {studyTip || "Ask your AI Tutor Chat for help to quiz your understanding of the lecture slides."}
               </p>
             </div>

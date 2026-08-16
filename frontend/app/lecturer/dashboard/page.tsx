@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth";
+import Leaderboard from "@/components/Leaderboard";
 
 export default function LecturerDashboard() {
   const { user, loading, logout, theme, toggleTheme } = useAuth();
@@ -252,6 +253,11 @@ export default function LecturerDashboard() {
                 ))}
               </div>
             )}
+
+            {/* Leaderboard Card */}
+            <div className="mt-8">
+              <Leaderboard />
+            </div>
           </div>
 
           {/* Courses & Admin Info (Right) */}
@@ -277,7 +283,7 @@ export default function LecturerDashboard() {
             </div>
 
             {/* Quick reminders card */}
-            <div className="sketch-card p-6 bg-[#FEF08A] dark:bg-yellow-950/20 text-[#1E293B] dark:text-[#E2E8F0]">
+            <div className="sketch-card p-6 !bg-[#FEF08A] !dark:bg-yellow-950/20 text-[#1E293B] dark:text-[#E2E8F0]">
               <h3 className="text-lg font-bold font-handwriting mb-3">
                 Teaching Reminders
               </h3>

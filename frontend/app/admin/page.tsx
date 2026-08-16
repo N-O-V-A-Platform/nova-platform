@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { authService, PendingLecturer } from "@/services/auth";
 import { useRouter } from "next/navigation";
+import Leaderboard from "@/components/Leaderboard";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong.";
@@ -167,6 +168,11 @@ export default function AdminPage() {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Leaderboard Card */}
+        <div className="mt-8">
+          <Leaderboard />
         </div>
 
         {/* Back Link */}

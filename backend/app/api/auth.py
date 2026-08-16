@@ -218,7 +218,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect email or password"
+            detail="An account with this email address does not exist. Please register first."
         )
 
     if not user.password_hash or not verify_password(credentials.password, user.password_hash):
@@ -557,7 +557,30 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
         )
 
     if user.is_email_verified:
-        return {"message": "Email is already verified."}
+        if user.is_active:
+            access_token = create_access_token(
+                data={"sub": user.email, "role": user.role.name if user.role else "Student"}
+            )
+            refresh_token = create_refresh_token(data={"sub": user.email})
+            return {
+                "message": "Email is already verified. Logging you in...",
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+                "user": {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "role_name": user.role.name if user.role else "Student",
+                    "institution_id": str(user.institution_id) if user.institution_id else None,
+                    "is_email_verified": user.is_email_verified,
+                    "is_onboarded": user.is_onboarded,
+                    "status": user.status,
+                }
+            }
+        else:
+            return {"message": "Email is already verified."}
 
     user.is_email_verified = True
     
@@ -571,12 +594,34 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
 
     db.add(user)
     await db.commit()
+    await db.refresh(user)
 
-    return {
-        "message": "Email verified successfully! You can now log in." 
-        if user.is_active 
-        else "Email verified successfully! Your lecturer account is now pending admin approval."
-    }
+    if user.is_active:
+        access_token = create_access_token(
+            data={"sub": user.email, "role": user.role.name if user.role else "Student"}
+        )
+        refresh_token = create_refresh_token(data={"sub": user.email})
+        return {
+            "message": "Email verified successfully! Logging you in...",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role_name": user.role.name if user.role else "Student",
+                "institution_id": str(user.institution_id) if user.institution_id else None,
+                "is_email_verified": user.is_email_verified,
+                "is_onboarded": user.is_onboarded,
+                "status": user.status,
+            }
+        }
+    else:
+        return {
+            "message": "Email verified successfully! Your lecturer account is now pending admin approval."
+        }
 
 
 @router.post("/forgot-password")

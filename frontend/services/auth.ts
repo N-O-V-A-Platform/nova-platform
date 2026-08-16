@@ -219,7 +219,7 @@ export const authService = {
     return resData;
   },
 
-  async verifyEmail(token: string): Promise<{ message: string }> {
+  async verifyEmail(token: string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -230,7 +230,14 @@ export const authService = {
       throw new Error(errData.detail || "Email verification failed");
     }
 
-    return response.json();
+    const resData = await response.json();
+    if (resData.access_token) {
+      this.setToken(resData.access_token);
+      if (resData.refresh_token) {
+        this.setRefreshToken(resData.refresh_token);
+      }
+    }
+    return resData;
   },
 
   async forgotPassword(email: string): Promise<{ message: string; token?: string }> {
@@ -594,6 +601,20 @@ export const authService = {
 
     if (!response.ok) {
       throw new Error("Failed to update reminder preferences");
+    }
+
+    return response.json();
+  },
+
+  async getLeaderboard(): Promise<any[]> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/users/leaderboard`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch leaderboard");
     }
 
     return response.json();

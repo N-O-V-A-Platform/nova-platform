@@ -90,3 +90,35 @@ async def init_db(db: AsyncSession) -> None:
             db.add(course)
             
     await db.commit()
+
+    # 6. Seed default authentic course resources
+    from app.models.resource import Resource
+    for c in UIPATH_COURSES:
+        course_result = await db.execute(select(Course).where(Course.code == c["code"]))
+        course = course_result.scalars().first()
+        if course:
+            res_result = await db.execute(select(Resource).where(Resource.course_id == course.id))
+            if not res_result.scalars().first():
+                url_map = {
+                    "UI-RPA-1": ("RPA_Starter_Introduction_Guide.pdf", "https://docs.uipath.com/hub/docs/rpa-starter"),
+                    "UI-STU-2": ("UiPath_Studio_Beginners_Guide.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/studio-introduction"),
+                    "UI-VAR-3": ("Studio_Variables_and_Arguments.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/managing-variables"),
+                    "UI-DAT-4": ("Studio_Data_Manipulation_Guide.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/data-manipulation"),
+                    "UI-XLS-5": ("Studio_Excel_Automation_Guide.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/excel-activities"),
+                    "UI-UIA-6": ("Studio_UI_Automation_Selectors.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/ui-automation-activities"),
+                    "UI-EML-7": ("Studio_Mail_Automation_Guide.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/mail-activities"),
+                    "UI-PDF-8": ("Studio_PDF_Automation_Guide.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/pdf-activities"),
+                    "UI-ORG-9": ("Studio_Project_Organization_Architecture.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-automation-projects"),
+                    "UI-ERR-10": ("Studio_Error_Handling_Guide.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-exception-handling"),
+                }
+                file_info = url_map.get(c["code"], ("UiPath_Course_Documentation.pdf", "https://docs.uipath.com"))
+                new_resource = Resource(
+                    course_id=course.id,
+                    file_name=file_info[0],
+                    file_type="pdf",
+                    storage_url=file_info[1],
+                    uploaded_by=lecturer.id
+                )
+                db.add(new_resource)
+                
+    await db.commit()

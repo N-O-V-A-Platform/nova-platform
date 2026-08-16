@@ -15,6 +15,17 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [isDesktop, setIsDesktop] = React.useState(false);
+
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    checkIsDesktop();
+    window.addEventListener("resize", checkIsDesktop);
+    return () => window.removeEventListener("resize", checkIsDesktop);
+  }, []);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
@@ -72,6 +83,15 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
       )
     },
     {
+      name: "Leaderboard",
+      href: "/student/leaderboard",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      )
+    },
+    {
       name: "AI Tutor Chat",
       href: "/student/chat",
       icon: (
@@ -91,6 +111,16 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
       )
     },
   ];
+
+  const sortedNavItems = React.useMemo(() => {
+    if (!isDesktop) return navItems;
+    const activeItem = navItems.find((item) => pathname === item.href);
+    if (activeItem) {
+      const remainingItems = navItems.filter((item) => pathname !== item.href);
+      return [activeItem, ...remainingItems];
+    }
+    return navItems;
+  }, [navItems, pathname, isDesktop]);
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#FAF6EE] text-[#1E1E1E] dark:bg-zinc-950 dark:text-white transition-colors duration-200">
@@ -124,7 +154,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
  
           {/* Navigation Links */}
           <nav className="space-y-1.5">
-            {navItems.map((item) => {
+            {sortedNavItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -132,7 +162,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
                   href={item.href}
                   className={`flex items-center gap-3 py-2 px-3 rounded-md border-2 transition-all font-handwriting text-base font-bold ${
                     isActive
-                      ? "bg-[#E75A3D] text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[1px] translate-y-[1px]"
+                      ? "bg-[#E75A3D] text-white border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] translate-x-[1px] translate-y-[1px] animate-slide-right"
                       : "bg-transparent border-transparent hover:border-black dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                   }`}
                 >

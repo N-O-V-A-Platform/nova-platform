@@ -172,3 +172,72 @@ async def send_reminders(
         emails_sent += 1
 
     return {"message": f"Successfully processed and sent {emails_sent} reminder emails."}
+
+
+from typing import List
+from sqlalchemy.orm import selectinload
+
+class LeaderboardEntry(BaseModel):
+    rank: int
+    user_id: str
+    first_name: str
+    last_name: str
+    email: str
+    xp: int
+    badges_count: int
+
+@router.get("/leaderboard", response_model=List[LeaderboardEntry])
+async def get_leaderboard(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Fetch all active users with their certificates and badges
+    result = await db.execute(
+        select(User)
+        .where(User.is_active == True)
+        .options(selectinload(User.certificates), selectinload(User.badges), selectinload(User.role))
+    )
+    users = result.scalars().all()
+
+    # Map course titles to their XP values
+    from app.api.uipath import UIPATH_COURSES
+    course_xp_map = {c["title"]: c["xp"] for c in UIPATH_COURSES}
+
+    leaderboard_data = []
+    for u in users:
+        # Calculate total XP from certificates
+        total_xp = sum(course_xp_map.get(cert.title, 0) for cert in u.certificates if cert.issuer == "UiPath Academy")
+        
+        role_name = u.role.name if u.role else "Student"
+        # Hide Admins from leaderboard
+        if role_name == "Admin":
+            continue
+
+        leaderboard_data.append({
+            "user_id": str(u.id),
+            "first_name": u.first_name,
+            "last_name": u.last_name,
+            "email": u.email,
+            "xp": total_xp,
+            "badges_count": len(u.badges)
+        })
+
+    # Sort by XP descending, then by badges_count descending, then by name
+    leaderboard_data.sort(key=lambda x: (-x["xp"], -x["badges_count"], x["first_name"].lower()))
+
+    # Assign ranks
+    ranked_leaderboard = []
+    for idx, entry in enumerate(leaderboard_data):
+        ranked_leaderboard.append(
+            LeaderboardEntry(
+                rank=idx + 1,
+                user_id=entry["user_id"],
+                first_name=entry["first_name"],
+                last_name=entry["last_name"],
+                email=entry["email"],
+                xp=entry["xp"],
+                badges_count=entry["badges_count"]
+            )
+        )
+
+    return ranked_leaderboard
