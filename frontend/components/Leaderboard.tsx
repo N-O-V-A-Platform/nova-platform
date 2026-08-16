@@ -122,7 +122,7 @@ export default function Leaderboard() {
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
-                        <span className="text-zinc-900 dark:text-zinc-150">
+                        <span className="text-zinc-900 dark:text-zinc-100 font-bold">
                           {entry.first_name} {entry.last_name}
                         </span>
                         {isCurrentUser && (
@@ -131,7 +131,7 @@ export default function Leaderboard() {
                           </span>
                         )}
                       </div>
-                      <span className="text-xs font-mono text-zinc-400 block sm:inline sm:ml-3">
+                      <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 block sm:inline sm:ml-3">
                         {entry.email}
                       </span>
                     </td>
