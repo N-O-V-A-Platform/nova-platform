@@ -190,10 +190,14 @@ export default function StudentChatPage() {
           <select
             value={selectedCourseId}
             onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="p-2.5 border-2 border-black dark:border-white rounded-md text-sm font-casual bg-transparent w-full sm:w-64"
+            className="sketch-input py-2 px-4 text-sm font-casual w-full sm:w-64 !bg-white dark:!bg-zinc-900 text-zinc-900 dark:text-zinc-100"
           >
             {courses.map((course) => (
-              <option key={course.id} value={course.id}>
+              <option 
+                key={course.id} 
+                value={course.id}
+                className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
+              >
                 {course.code}: {course.title}
               </option>
             ))}
