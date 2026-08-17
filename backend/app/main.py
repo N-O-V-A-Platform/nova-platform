@@ -32,7 +32,35 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
     loop.run_in_executor(None, _warm_embedding_model)
 
+    # Initialize APScheduler for weekly scrape tasks
+    from apscheduler.schedulers.background import BackgroundScheduler
+    scheduler = BackgroundScheduler()
+
+    def weekly_scrape_job():
+        import asyncio
+        from app.workers.scraper import scrape_worker
+        from app.db.session import AsyncSessionLocal
+        
+        async def _run():
+            async with AsyncSessionLocal() as session:
+                await scrape_worker.run_full_scrape(session)
+                
+        new_loop = asyncio.new_event_loop()
+        try:
+            new_loop.run_until_complete(_run())
+        finally:
+            new_loop.close()
+
+    # Schedule for Sunday at 2:00 AM
+    scheduler.add_job(weekly_scrape_job, "cron", day_of_week="sun", hour=2, minute=0)
+    scheduler.start()
+    print("[NOVA] Weekly UiPath documentation scraper schedule started.")
+
     yield
+    
+    # Shutdown scheduler on app shutdown
+    scheduler.shutdown()
+    print("[NOVA] Scheduler stopped.")
 
 
 app = FastAPI(
