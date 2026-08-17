@@ -164,7 +164,7 @@ Context:
         if self.use_nvidia and not answer:
             try:
                 response = await self.nvidia_client.chat.completions.create(
-                    model="nvidia/llama-3.1-nemotron-70b-instruct",
+                    model="nvidia/nemotron-3-ultra-550b-a55b",
                     messages=messages,
                     temperature=0.2,
                     max_tokens=1024,
