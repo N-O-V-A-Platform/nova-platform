@@ -1,31 +1,72 @@
+"""
+N.O.V.A. RAG Service — Agentic Pipeline with Memory
+
+Provider priority (cascade on failure):
+  1. NVIDIA Nemotron (nvidia/llama-3.1-nemotron-70b-instruct) via NIM API
+  2. Groq (llama-3.1-8b-instant)
+  3. OpenRouter (meta-llama/llama-3.1-8b-instruct:free)
+
+Memory pipeline (before any LLM call):
+  1. Check Redis long-term semantic cache for a similar past question
+     → Cache HIT (similarity ≥ 0.88): return cached answer, 0 tokens used
+     → Cache MISS: proceed with full RAG + LLM pipeline
+  2. After LLM generates an answer: store Q+A in long-term cache for future hits
+"""
+
 import asyncio
-from typing import List, Dict, Any, Tuple
+from typing import Dict, List, Optional, Tuple
+
 from openai import AsyncOpenAI
 
 from app.core.config import settings
 from app.ai.embeddings import EmbeddingService
 from app.ai.vector_store import PineconeVectorStore
+from app.ai.memory_service import MemoryService
+
 
 class RAGService:
     def __init__(self):
         self.embedding_service = EmbeddingService()
         self.vector_store = PineconeVectorStore()
-        
+        self.memory = MemoryService()
+
+        # ── LLM Provider Setup ────────────────────────────────────────────────
+        self.use_nvidia = bool(settings.NVIDIA_API_KEY)
         self.use_groq = bool(settings.GROQ_API_KEY)
         self.use_openrouter = bool(settings.OPENROUTER_API_KEY)
-        
+
+        if self.use_nvidia:
+            # NVIDIA NIM is fully OpenAI API-compatible
+            self.nvidia_client = AsyncOpenAI(
+                api_key=settings.NVIDIA_API_KEY,
+                base_url="https://integrate.api.nvidia.com/v1"
+            )
+
         if self.use_groq:
-            # Groq is OpenAI API compatible
             self.groq_client = AsyncOpenAI(
                 api_key=settings.GROQ_API_KEY,
                 base_url="https://api.groq.com/openai/v1"
             )
+
         if self.use_openrouter:
-            # OpenRouter is OpenAI API compatible
             self.openrouter_client = AsyncOpenAI(
                 api_key=settings.OPENROUTER_API_KEY,
                 base_url="https://openrouter.ai/api/v1"
             )
+
+    def _build_messages(
+        self,
+        system_prompt: str,
+        chat_history: List[Dict[str, str]],
+        query: str
+    ) -> List[Dict[str, str]]:
+        """Build the message list for an LLM API call."""
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in chat_history:
+            role = "assistant" if msg["role"] == "assistant" else "user"
+            messages.append({"role": role, "content": msg["content"]})
+        messages.append({"role": "user", "content": query})
+        return messages
 
     async def get_response(
         self,
@@ -36,20 +77,48 @@ class RAGService:
         confidence_threshold: float = 0.65
     ) -> Tuple[str, float, bool]:
         """
-        Executes the RAG pipeline.
+        Executes the full agentic RAG pipeline with memory.
+
+        Order of operations:
+          1. Embed the query (local, free, deterministic)
+          2. Search long-term memory (Redis semantic cache)
+          3. If cache hit → return immediately (0 API tokens)
+          4. If cache miss → RAG retrieval → LLM generation
+          5. Store new answer in long-term memory
+          6. Return answer
+
         Returns:
             Tuple[answer_text, confidence_score, should_escalate]
         """
         if chat_history is None:
             chat_history = []
 
-        # 1. Embed query (locally, deterministic, and free)
+        escalation_flag_phrase = (
+            "I cannot find this information in the course materials. "
+            "I have escalated this question to your lecturer."
+        )
+
+        # ── Step 1: Embed the query (local sentence-transformers) ─────────────
         try:
             query_emb = await self.embedding_service.get_embedding(query)
         except Exception as e:
             return f"Error creating query embedding: {str(e)}", 0.0, True
 
-        # 2. Query Pinecone
+        # ── Step 2: Search long-term semantic memory (Redis) ──────────────────
+        try:
+            cache_result = await self.memory.search_long_term(
+                query_embedding=query_emb,
+                course_id=course_id
+            )
+            if cache_result:
+                cached_answer, cache_similarity = cache_result
+                # Return the cached answer — zero LLM tokens consumed
+                return cached_answer, cache_similarity, False
+        except Exception:
+            # Memory lookup failure is non-fatal; fall through to full pipeline
+            pass
+
+        # ── Step 3: Query Pinecone for relevant course document chunks ─────────
         try:
             matches = await self.vector_store.query_chunks(
                 query_embedding=query_emb,
@@ -57,10 +126,9 @@ class RAGService:
                 top_k=5
             )
         except Exception as e:
-            # Fallback if vector store search fails
             return f"Error retrieving course materials context: {str(e)}", 0.0, True
 
-        # 3. Assess confidence score from vector similarity
+        # ── Step 4: Assess confidence from vector similarity scores ───────────
         best_score = 0.0
         context_chunks = []
         for m in matches:
@@ -68,62 +136,56 @@ class RAGService:
             if m["score"] > best_score:
                 best_score = m["score"]
 
-        # Default fallback string if no context matches
-        escalation_flag_phrase = "I cannot find this information in the course materials. I have escalated this question to your lecturer."
-
-        # If similarity score is below the threshold, automatically flag for escalation
-        should_escalate = False
+        # If similarity is below threshold, escalate without calling the LLM
         if best_score < confidence_threshold:
-            should_escalate = True
-            return escalation_flag_phrase, best_score, should_escalate
+            return escalation_flag_phrase, best_score, True
 
-        # 4. Formulate the LLM Prompt
+        # ── Step 5: Build system prompt with RAG context ──────────────────────
         context_text = "\n---\n".join(context_chunks)
-        
-        system_prompt = f"""You are N.O.V.A., an AI educational assistant.
-Your goal is to answer the student's question based strictly on the course materials provided in the Context section below.
+
+        system_prompt = f"""You are N.O.V.A., an AI educational assistant for the N.O.V.A. learning platform.
+Your goal is to answer the student's question based strictly on the course materials provided below.
 
 Instructions:
 1. Ground your answer completely and only in the provided Context.
 2. If the answer cannot be found or reasonably inferred from the Context, reply exactly with: "{escalation_flag_phrase}"
-3. Do not make up facts, URLs, or hallucinate answers that are not supported by the context.
-4. Keep your response clear, structured, and easy to understand for a student.
+3. Do not make up facts, URLs, or hallucinate answers not supported by the context.
+4. Keep your response clear, structured, and student-friendly.
+5. Use the conversation history for continuity, but always prioritise the provided Context.
 
 Context:
 {context_text}
 """
 
-        # 5. Call LLM (Groq -> OpenRouter fallback cascade, Gemini & OpenAI removed)
+        # ── Step 6: Call LLM (Nemotron → Groq → OpenRouter cascade) ──────────
         answer = ""
-        
-        if self.use_groq:
-            try:
-                # Format messages for Groq
-                messages = [{"role": "system", "content": system_prompt}]
-                for msg in chat_history:
-                    role = "assistant" if msg["role"] == "assistant" else "user"
-                    messages.append({"role": role, "content": msg["content"]})
-                messages.append({"role": "user", "content": query})
+        messages = self._build_messages(system_prompt, chat_history, query)
 
-                response = await self.groq_client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
+        if self.use_nvidia and not answer:
+            try:
+                response = await self.nvidia_client.chat.completions.create(
+                    model="nvidia/llama-3.1-nemotron-70b-instruct",
                     messages=messages,
-                    temperature=0.2
+                    temperature=0.2,
+                    max_tokens=1024,
                 )
                 answer = response.choices[0].message.content.strip()
             except Exception as e:
-                # Silently log and check fallback
-                pass
+                print(f"[NOVA RAG] Nemotron failed: {e} — trying fallback")
 
-        if not answer and self.use_openrouter:
+        if self.use_groq and not answer:
             try:
-                # Format messages for OpenRouter
-                messages = [{"role": "system", "content": system_prompt}]
-                for msg in chat_history:
-                    role = "assistant" if msg["role"] == "assistant" else "user"
-                    messages.append({"role": role, "content": msg["content"]})
-                messages.append({"role": "user", "content": query})
+                response = await self.groq_client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=messages,
+                    temperature=0.2,
+                )
+                answer = response.choices[0].message.content.strip()
+            except Exception as e:
+                print(f"[NOVA RAG] Groq failed: {e} — trying fallback")
 
+        if self.use_openrouter and not answer:
+            try:
                 response = await self.openrouter_client.chat.completions.create(
                     model="meta-llama/llama-3.1-8b-instruct:free",
                     messages=messages,
@@ -135,15 +197,33 @@ Context:
                 )
                 answer = response.choices[0].message.content.strip()
             except Exception as e:
-                # Silently log
-                pass
+                print(f"[NOVA RAG] OpenRouter failed: {e}")
 
         if not answer:
-            return "No active LLM provider (Groq or OpenRouter) is currently configured or available.", 0.0, True
+            return (
+                "No LLM provider is currently available (Nemotron, Groq, and OpenRouter all failed). "
+                "Please check your API keys in .env.docker.",
+                0.0, True
+            )
 
-        # Check if the LLM output matched our escalation phrase
+        # ── Step 7: Detect escalation phrase in LLM output ───────────────────
+        should_escalate = False
         if escalation_flag_phrase in answer or "escalated this question" in answer.lower():
             should_escalate = True
             answer = escalation_flag_phrase
+
+        # ── Step 8: Store answer in long-term memory for future cache hits ────
+        if not should_escalate:
+            try:
+                await self.memory.store_long_term(
+                    question=query,
+                    answer=answer,
+                    embedding=query_emb,
+                    course_id=course_id,
+                    confidence=best_score,
+                    source="rag"
+                )
+            except Exception:
+                pass  # Memory write failure is non-fatal
 
         return answer, best_score, should_escalate
