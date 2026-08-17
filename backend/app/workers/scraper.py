@@ -38,43 +38,43 @@ UIPATH_NAMESPACE = "uipath_global"
 # Add/remove entries here to change what gets indexed.
 UIPATH_SOURCES: List[Dict[str, str]] = [
     # ── UiPath Studio ─────────────────────────────────────────────────────────
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/introduction", "title": "UiPath Studio - Introduction"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-automation-projects", "title": "About Automation Projects"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/workflow-design", "title": "Workflow Design"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/sequences", "title": "Sequences"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/flowcharts", "title": "Flowcharts"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/state-machines", "title": "State Machines"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/variables", "title": "Variables in UiPath"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/arguments", "title": "Arguments in UiPath"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/selectors", "title": "Selectors"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-debugging", "title": "Debugging in UiPath Studio"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/keyboard-shortcuts", "title": "UiPath Studio Keyboard Shortcuts"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/introduction", "title": "UiPath Studio - Introduction", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-automation-projects", "title": "About Automation Projects", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/workflow-design", "title": "Workflow Design", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/sequences", "title": "Sequences", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/flowcharts", "title": "Flowcharts", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/state-machines", "title": "State Machines", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/variables", "title": "Variables in UiPath", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/arguments", "title": "Arguments in UiPath", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/selectors", "title": "Selectors", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-debugging", "title": "Debugging in UiPath Studio", "product": "Studio", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/keyboard-shortcuts", "title": "UiPath Studio Keyboard Shortcuts", "product": "Studio", "version": "2023.10"},
 
     # ── UiPath Orchestrator ───────────────────────────────────────────────────
-    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/introduction", "title": "Orchestrator - Introduction"},
-    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-queues-and-transactions", "title": "Queues and Transactions"},
-    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/managing-processes", "title": "Managing Processes"},
-    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-jobs", "title": "About Jobs"},
-    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-triggers", "title": "About Triggers"},
-    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-robots", "title": "About Robots"},
-    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/assets", "title": "Assets in Orchestrator"},
+    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/introduction", "title": "Orchestrator - Introduction", "product": "Orchestrator", "version": "Latest"},
+    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-queues-and-transactions", "title": "Queues and Transactions", "product": "Orchestrator", "version": "Latest"},
+    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/managing-processes", "title": "Managing Processes", "product": "Orchestrator", "version": "Latest"},
+    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-jobs", "title": "About Jobs", "product": "Orchestrator", "version": "Latest"},
+    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-triggers", "title": "About Triggers", "product": "Orchestrator", "version": "Latest"},
+    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-robots", "title": "About Robots", "product": "Orchestrator", "version": "Latest"},
+    {"url": "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/assets", "title": "Assets in Orchestrator", "product": "Orchestrator", "version": "Latest"},
 
     # ── UiPath Robot ──────────────────────────────────────────────────────────
-    {"url": "https://docs.uipath.com/robot/standalone/2023.10/user-guide/introduction", "title": "UiPath Robot - Introduction"},
-    {"url": "https://docs.uipath.com/robot/standalone/2023.10/user-guide/attended-vs-unattended", "title": "Attended vs Unattended Robots"},
+    {"url": "https://docs.uipath.com/robot/standalone/2023.10/user-guide/introduction", "title": "UiPath Robot - Introduction", "product": "Robot", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/robot/standalone/2023.10/user-guide/attended-vs-unattended", "title": "Attended vs Unattended Robots", "product": "Robot", "version": "2023.10"},
 
     # ── UiPath Activities ─────────────────────────────────────────────────────
-    {"url": "https://docs.uipath.com/activities/other/latest/ui-automation/about-ui-automation", "title": "About UI Automation"},
-    {"url": "https://docs.uipath.com/activities/other/latest/productivity/about-mail-activities", "title": "Mail Activities"},
-    {"url": "https://docs.uipath.com/activities/other/latest/system/about-file-management-activities", "title": "File Management Activities"},
+    {"url": "https://docs.uipath.com/activities/other/latest/ui-automation/about-ui-automation", "title": "About UI Automation", "product": "Activities", "version": "Latest"},
+    {"url": "https://docs.uipath.com/activities/other/latest/productivity/about-mail-activities", "title": "Mail Activities", "product": "Activities", "version": "Latest"},
+    {"url": "https://docs.uipath.com/activities/other/latest/system/about-file-management-activities", "title": "File Management Activities", "product": "Activities", "version": "Latest"},
 
     # ── RPA Concepts ──────────────────────────────────────────────────────────
-    {"url": "https://www.uipath.com/rpa/what-is-rpa", "title": "What is RPA?"},
-    {"url": "https://www.uipath.com/rpa/robotic-process-automation", "title": "Robotic Process Automation Overview"},
+    {"url": "https://www.uipath.com/rpa/what-is-rpa", "title": "What is RPA?", "product": "UiPath RPA", "version": "Latest"},
+    {"url": "https://www.uipath.com/rpa/robotic-process-automation", "title": "Robotic Process Automation Overview", "product": "UiPath RPA", "version": "Latest"},
 
     # ── Robotic Enterprise Framework (REFramework) ────────────────────────────
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/robotic-enterprise-framework", "title": "Robotic Enterprise Framework (REFramework)"},
-    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-studiox", "title": "UiPath StudioX Overview"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/robotic-enterprise-framework", "title": "Robotic Enterprise Framework (REFramework)", "product": "REFramework", "version": "2023.10"},
+    {"url": "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-studiox", "title": "UiPath StudioX Overview", "product": "StudioX", "version": "2023.10"},
 ]
 
 
@@ -100,6 +100,7 @@ class ScrapeWorker:
         """
         Check robots.txt of the domain to verify if scraping is allowed.
         Caches RobotFileParser instances to minimize HTTP requests.
+        If robots.txt is unavailable (except standard 404), defaults to disallowing.
         """
         from urllib.robotparser import RobotFileParser
         from urllib.parse import urlparse
@@ -109,7 +110,8 @@ class ScrapeWorker:
         scheme = parsed_url.scheme
 
         if not netloc or not scheme:
-            return True
+            logger.warning(f"[Scraper] Invalid URL: {url}")
+            return False
 
         if netloc not in self._robot_parsers:
             robots_url = f"{scheme}://{netloc}/robots.txt"
@@ -120,14 +122,23 @@ class ScrapeWorker:
                     response = await client.get(robots_url, headers=headers)
                 if response.status_code == 200:
                     rp.parse(response.text.splitlines())
-                else:
+                    self._robot_parsers[netloc] = (rp, True)
+                elif response.status_code == 404:
+                    # 404 means no robots.txt, standard robot rules imply allowed
                     rp.parse([])
+                    self._robot_parsers[netloc] = (rp, True)
+                else:
+                    logger.warning(f"[Scraper] robots.txt returned status {response.status_code} for {netloc}. Disallowing crawls for safety.")
+                    self._robot_parsers[netloc] = (None, False)
             except Exception as e:
-                logger.warning(f"[Scraper] Failed to fetch/parse robots.txt for {netloc}: {e}")
-                rp.parse([])
-            self._robot_parsers[netloc] = rp
+                logger.warning(f"[Scraper] Failed to fetch robots.txt for {netloc}: {e}. Disallowing crawls for safety.")
+                self._robot_parsers[netloc] = (None, False)
 
-        return self._robot_parsers[netloc].can_fetch("NOVABot", url)
+        parser, available = self._robot_parsers[netloc]
+        if not available:
+            return False
+
+        return parser.can_fetch("NOVABot", url)
 
     async def scrape_url(self, url: str) -> Optional[str]:
         """
@@ -184,13 +195,15 @@ class ScrapeWorker:
     ) -> Dict[str, Any]:
         """
         Scrape one URL, chunk → embed → upsert, and record the result.
-        Returns a result dict with status and chunk_count.
+        Avoids embedding and writing unchanged pages using content hashing.
         """
         url = source["url"]
         title = source["title"]
+        product = source.get("product", "UiPath")
+        version = source.get("version", "Latest")
         source_id = hashlib.md5(url.encode()).hexdigest()
 
-        # Query existing record first to get the previous chunk count
+        # Query existing record first to get the previous chunk count and content hash
         result_obj = await db.execute(
             select(ScrapedSource).where(ScrapedSource.url == url)
         )
@@ -202,39 +215,27 @@ class ScrapeWorker:
             if not text:
                 return {"url": url, "status": "error", "error": "Empty, failed to fetch, or disallowed by robots.txt"}
 
-            # 2. Chunk the text
+            # Calculate content hash to determine if we can skip embedding
+            content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+            # 2. Check if content has changed
+            if record and record.status == "success" and record.content_hash == content_hash:
+                logger.info(f"[Scraper] ➔ {title} unchanged. Skipping chunking and embedding.")
+                record.last_scraped_at = datetime.now(timezone.utc)
+                await db.commit()
+                return {"url": url, "status": "skipped", "chunk_count": record.chunk_count}
+
+            # 3. Chunk the text
             chunks = DocumentProcessor.chunk_text(text, chunk_size=800, chunk_overlap=150)
             if not chunks:
                 return {"url": url, "status": "error", "error": "No chunks extracted"}
 
             chunk_texts = [c["text"] for c in chunks]
 
-            # 3. Batch embed
+            # 4. Batch embed
             embeddings = await self.embedding_service.get_embeddings_batch(chunk_texts)
 
-            # Parse product and version from URL
-            product = "UiPath"
-            version = "Latest"
-            
-            lower_url = url.lower()
-            if "studio" in lower_url:
-                product = "Studio"
-            elif "orchestrator" in lower_url:
-                product = "Orchestrator"
-            elif "robot" in lower_url:
-                product = "Robot"
-            elif "activities" in lower_url:
-                product = "Activities"
-            elif "document-understanding" in lower_url:
-                product = "Document Understanding"
-                
-            import re
-            ver_match = re.search(r'/(20\d{2}\.\d{1,2}|latest|v\d+)/', lower_url)
-            if ver_match:
-                version = ver_match.group(1).capitalize()
-
-            # 4. Upsert into Pinecone
-            # Use source_id prefix so we can delete/replace on re-scrape
+            # 5. Upsert into Pinecone
             pinecone_vectors = []
             for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
                 pinecone_vectors.append({
@@ -255,23 +256,25 @@ class ScrapeWorker:
                 index = self.vector_store._get_index(self.vector_store.dimension)
                 loop = asyncio.get_event_loop()
 
-                # Clean up old vectors if chunk count has changed to prevent orphaned chunks
-                if record and record.chunk_count > 0:
-                    old_ids = [f"{source_id}_{i}" for i in range(record.chunk_count)]
-                    try:
-                        await loop.run_in_executor(
-                            None,
-                            lambda: index.delete(ids=old_ids, namespace=UIPATH_NAMESPACE)
-                        )
-                    except Exception as de:
-                        logger.warning(f"[Scraper] Failed to delete old vectors for {url}: {de}")
-
+                # Upsert new vectors first
                 await loop.run_in_executor(
                     None,
                     lambda: index.upsert(vectors=pinecone_vectors, namespace=UIPATH_NAMESPACE)
                 )
 
-            # 5. Upsert ScrapedSource record
+                # Clean up excess old vectors AFTER the new ones are successfully upserted
+                # This ensures we don't leave orphaned chunks if chunk count decreased
+                if record and record.chunk_count > len(chunks):
+                    excess_ids = [f"{source_id}_{i}" for i in range(len(chunks), record.chunk_count)]
+                    try:
+                        await loop.run_in_executor(
+                            None,
+                            lambda: index.delete(ids=excess_ids, namespace=UIPATH_NAMESPACE)
+                        )
+                    except Exception as de:
+                        logger.warning(f"[Scraper] Failed to delete excess old vectors for {url}: {de}")
+
+            # 6. Upsert ScrapedSource record
             now = datetime.now(timezone.utc)
 
             if record:
@@ -279,6 +282,7 @@ class ScrapeWorker:
                 record.chunk_count = len(chunks)
                 record.status = "success"
                 record.error_message = None
+                record.content_hash = content_hash
                 record.last_scraped_at = now
             else:
                 record = ScrapedSource(
@@ -287,6 +291,7 @@ class ScrapeWorker:
                     namespace=UIPATH_NAMESPACE,
                     chunk_count=len(chunks),
                     status="success",
+                    content_hash=content_hash,
                     last_scraped_at=now,
                 )
                 db.add(record)
@@ -336,6 +341,7 @@ class ScrapeWorker:
 
         results = []
         success_count = 0
+        skipped_count = 0
         error_count = 0
 
         for source in UIPATH_SOURCES:
@@ -343,6 +349,8 @@ class ScrapeWorker:
             results.append(result)
             if result["status"] == "success":
                 success_count += 1
+            elif result["status"] == "skipped":
+                skipped_count += 1
             else:
                 error_count += 1
             # Small delay between requests to be polite
@@ -350,13 +358,14 @@ class ScrapeWorker:
 
         self._running = False
         logger.info(
-            f"[Scraper] Scrape complete — {success_count} success, {error_count} errors"
+            f"[Scraper] Scrape complete — {success_count} success, {skipped_count} skipped, {error_count} errors"
         )
 
         return {
             "status": "complete",
             "total_sources": len(UIPATH_SOURCES),
             "success": success_count,
+            "skipped": skipped_count,
             "errors": error_count,
             "results": results,
         }
