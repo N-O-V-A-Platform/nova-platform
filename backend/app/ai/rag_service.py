@@ -74,30 +74,30 @@ class RAGService:
     async def get_corpus_version(self, db: AsyncSession, course_id: str, namespace: str) -> str:
         """
         Generates a composite SHA-256 hash of the current course materials and scraped sources.
-        Guarantees semantic cache invalidation when any document or scraped page is updated.
+        Guarantees semantic cache invalidation when any document content or scraped page changes.
         """
         import hashlib
         course_uuid = course_id if isinstance(course_id, uuid.UUID) else uuid.UUID(course_id)
         
-        # Get active resource details for the course
+        # Get active resource details for the course (using storage_url as a surrogate content location/signature)
         from app.models.resource import Resource
         res_result = await db.execute(
-            select(Resource.id, Resource.file_name, Resource.created_at)
+            select(Resource.id, Resource.file_name, Resource.storage_url)
             .where(Resource.course_id == course_uuid)
             .order_by(Resource.id)
         )
         resources = res_result.all()
-        res_str = "|".join([f"{r.id}:{r.file_name}:{r.created_at.isoformat()}" for r in resources])
+        res_str = "|".join([f"{r.id}:{r.file_name}:{r.storage_url}" for r in resources])
 
         # Get scraped sources details
         from app.models.scrape import ScrapedSource
         scrape_result = await db.execute(
-            select(ScrapedSource.url, ScrapedSource.content_hash, ScrapedSource.last_scraped_at)
+            select(ScrapedSource.url, ScrapedSource.content_hash)
             .where(ScrapedSource.status == "success")
             .order_by(ScrapedSource.url)
         )
         scrapes = scrape_result.all()
-        scrape_str = "|".join([f"{s.url}:{s.content_hash}:{s.last_scraped_at.isoformat() if s.last_scraped_at else ''}" for s in scrapes])
+        scrape_str = "|".join([f"{s.url}:{s.content_hash}" for s in scrapes])
 
         combined = f"{res_str}###{scrape_str}###{namespace}"
         return hashlib.sha256(combined.encode("utf-8")).hexdigest()
@@ -177,7 +177,7 @@ class RAGService:
             if course_obj:
                 is_uipath_course = course_obj.code.startswith("UI-") or "uipath" in course_obj.title.lower()
 
-            uipath_keywords = ["uipath", "orchestrator", "reframework", "studiox", "studio", "attended robot", "unattended robot"]
+            uipath_keywords = ["uipath", "orchestrator", "reframework", "studiox", "uipath studio", "attended robot", "unattended robot"]
             query_lower = query.lower()
             is_query_uipath = any(kw in query_lower for kw in uipath_keywords)
 
