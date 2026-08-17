@@ -120,11 +120,26 @@ class RAGService:
 
         # ── Step 3: Query Pinecone for relevant course document chunks ─────────
         try:
+            # Retrieve course-specific context chunks
             matches = await self.vector_store.query_chunks(
                 query_embedding=query_emb,
                 namespace=namespace,
                 top_k=5
             )
+            
+            # Also retrieve global scraped UiPath documentation/community context
+            try:
+                global_matches = await self.vector_store.query_chunks(
+                    query_embedding=query_emb,
+                    namespace="uipath_global",
+                    top_k=5
+                )
+                # Merge and select top 5 by similarity score
+                matches.extend(global_matches)
+                matches.sort(key=lambda x: x.get("score", 0.0), reverse=True)
+                matches = matches[:5]
+            except Exception as ge:
+                print(f"[NOVA RAG] Warning: failed to retrieve global uipath_global context: {ge}")
         except Exception as e:
             return f"Error retrieving course materials context: {str(e)}", 0.0, True
 
