@@ -6,7 +6,9 @@ from app.core.config import settings
 class PineconeVectorStore:
     def __init__(self):
         self.api_key = settings.PINECONE_API_KEY
-        self.index_name = "nova-index"
+        # v2: dimension=384 matches sentence-transformers/all-MiniLM-L6-v2
+        self.index_name = "nova-index-v2"
+        self.dimension = 384
         self.pc = Pinecone(api_key=self.api_key) if self.api_key else None
         self._index = None
 
@@ -49,7 +51,7 @@ class PineconeVectorStore:
         if not self.pc:
             return False
 
-        dimension = len(embeddings[0]) if embeddings else 1536
+        dimension = len(embeddings[0]) if embeddings else self.dimension
         index = self._get_index(dimension)
 
         vectors = []
@@ -119,8 +121,8 @@ class PineconeVectorStore:
         if not self.pc:
             return False
 
-        # Get index with default dimension
-        index = self._get_index(1536)
+        # Get index with canonical dimension
+        index = self._get_index(self.dimension)
 
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
