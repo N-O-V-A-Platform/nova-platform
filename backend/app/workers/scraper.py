@@ -27,6 +27,7 @@ from app.ai.document_processor import DocumentProcessor
 from app.ai.embeddings import EmbeddingService
 from app.ai.vector_store import PineconeVectorStore
 from app.models.scrape import ScrapedSource
+from app.core.config import settings
 
 logger = logging.getLogger("nova.scraper")
 
@@ -248,6 +249,8 @@ class ScrapeWorker:
                         "version": version,
                         "text": chunk["text"],
                         "chunk_index": i,
+                        "embedding_model": self.embedding_service.model_name,
+                        "embedding_dimension": settings.EMBEDDING_DIMENSION,
                     }
                 })
 
@@ -283,6 +286,8 @@ class ScrapeWorker:
                 record.status = "success"
                 record.error_message = None
                 record.content_hash = content_hash
+                record.embedding_model = self.embedding_service.model_name
+                record.embedding_dimension = settings.EMBEDDING_DIMENSION
                 record.last_scraped_at = now
             else:
                 record = ScrapedSource(
@@ -292,6 +297,8 @@ class ScrapeWorker:
                     chunk_count=len(chunks),
                     status="success",
                     content_hash=content_hash,
+                    embedding_model=self.embedding_service.model_name,
+                    embedding_dimension=settings.EMBEDDING_DIMENSION,
                     last_scraped_at=now,
                 )
                 db.add(record)

@@ -13,26 +13,28 @@ import asyncio
 from functools import lru_cache
 from typing import List
 
+from app.core.config import settings
+
 
 @lru_cache(maxsize=1)
-def _load_model():
+def _load_model(model_name: str):
     """
-    Lazily load the SentenceTransformer model once and cache it for the
-    lifetime of the process. The @lru_cache ensures this is only called once
+    Lazily load the SentenceTransformer model once per Python process.
+    The @lru_cache ensures this is only called once per unique model_name
     even under concurrent async requests.
     """
     from sentence_transformers import SentenceTransformer
-    return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    return SentenceTransformer(model_name)
 
 
 class EmbeddingService:
     def __init__(self):
-        pass
+        self.model_name = settings.EMBEDDING_MODEL
 
     async def get_embedding(self, text: str) -> List[float]:
         """
-        Generate a real 384-dimensional semantic embedding vector for the given text.
-        Uses sentence-transformers/all-MiniLM-L6-v2 running locally on CPU.
+        Generate a real semantic embedding vector for the given text.
+        Uses the configured SentenceTransformer model running locally on CPU.
 
         Similar questions will produce similar (high cosine similarity) vectors,
         enabling the semantic memory cache to work correctly.
@@ -42,7 +44,7 @@ class EmbeddingService:
         loop = asyncio.get_event_loop()
         vector = await loop.run_in_executor(
             None,
-            lambda: _load_model().encode(text, normalize_embeddings=True).tolist()
+            lambda: _load_model(self.model_name).encode(text, normalize_embeddings=True).tolist()
         )
         return vector
 
@@ -56,6 +58,6 @@ class EmbeddingService:
         loop = asyncio.get_event_loop()
         vectors = await loop.run_in_executor(
             None,
-            lambda: _load_model().encode(cleaned, normalize_embeddings=True).tolist()
+            lambda: _load_model(self.model_name).encode(cleaned, normalize_embeddings=True).tolist()
         )
         return vectors

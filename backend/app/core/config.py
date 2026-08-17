@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     NVIDIA_API_KEY: str = ""
     PINECONE_API_KEY: str = ""
 
+    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_DIMENSION: int = 384
+
     @property
     def admin_email_set(self) -> set[str]:
         return {

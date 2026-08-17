@@ -24,7 +24,8 @@ async def lifespan(app: FastAPI):
     def _warm_embedding_model():
         try:
             from app.ai.embeddings import _load_model
-            _load_model()  # triggers @lru_cache load
+            from app.core.config import settings
+            _load_model(settings.EMBEDDING_MODEL)  # triggers @lru_cache load
             print("[NOVA] Embedding model pre-warmed and ready.")
         except Exception as e:
             print(f"[NOVA] Warning: embedding model pre-warm failed: {e}")

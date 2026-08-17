@@ -22,5 +22,7 @@ class ScrapedSource(Base):
     # status values: "pending" | "success" | "error"
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    embedding_model: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    embedding_dimension: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     last_scraped_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

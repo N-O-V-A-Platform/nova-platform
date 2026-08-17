@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import String, Text, ForeignKey, DateTime
+from sqlalchemy import String, Text, ForeignKey, DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -30,6 +30,7 @@ class KnowledgeBase(Base):
     resource_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("resources.id", ondelete="CASCADE"))
     pinecone_namespace: Mapped[str] = mapped_column(String(255), nullable=False)
     embedding_model: Mapped[str] = mapped_column(String(100), nullable=False)
+    embedding_dimension: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     indexed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
