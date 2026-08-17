@@ -10,11 +10,28 @@ from app.api.v1.router import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: seed database with default roles, institution, and courses."""
+    """Startup: seed database, then pre-warm the embedding model so the first
+    student chat request has zero cold-start latency."""
     from app.db.session import AsyncSessionLocal
     from app.db.init_db import init_db
     async with AsyncSessionLocal() as db:
         await init_db(db)
+
+    # Pre-warm sentence-transformers model in a background thread.
+    # This downloads (first run only) and loads the model into RAM.
+    # All subsequent requests get sub-50ms embedding latency.
+    import asyncio
+    def _warm_embedding_model():
+        try:
+            from app.ai.embeddings import _load_model
+            _load_model()  # triggers @lru_cache load
+            print("[NOVA] Embedding model pre-warmed and ready.")
+        except Exception as e:
+            print(f"[NOVA] Warning: embedding model pre-warm failed: {e}")
+
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, _warm_embedding_model)
+
     yield
 
 
