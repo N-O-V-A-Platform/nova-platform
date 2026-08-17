@@ -618,5 +618,47 @@ export const authService = {
     }
 
     return response.json();
+  },
+
+  async getScrapeStatus(): Promise<any> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/admin/scrape/status`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch scrape status");
+    }
+
+    return response.json();
+  },
+
+  async getScrapedSources(): Promise<any[]> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/admin/scrape/sources`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch scraped sources");
+    }
+
+    return response.json();
+  },
+
+  async triggerScrape(): Promise<any> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/admin/scrape/trigger`, {
+      method: "POST",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to trigger scraper");
+    }
+
+    return response.json();
   }
 };

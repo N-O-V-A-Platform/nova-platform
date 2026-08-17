@@ -150,7 +150,7 @@ export default function LecturerDashboard() {
               Classroom Desk
             </button>
             <button 
-              onClick={() => alert("Upload Resource (Phase 3 Backend Link) is coming soon!")}
+              onClick={() => router.push("/lecturer/materials")}
               className="flex-shrink-0 px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-2 border-transparent hover:border-black dark:hover:border-white rounded-md transition-all text-xs md:text-base md:py-2 md:w-full md:text-left"
             >
               Course Materials
