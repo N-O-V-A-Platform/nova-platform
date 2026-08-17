@@ -1,33 +1,6 @@
-"""
-N.O.V.A. Agentic Memory Service
-
-Implements a two-tier memory system backed by Redis:
-
-  LONG-TERM MEMORY (Semantic Answer Cache)
-  ─────────────────────────────────────────
-  Stores answered Q&A pairs with their embedding vectors.
-  On new incoming questions, performs cosine similarity search against
-  cached entries for the same course. If similarity ≥ SIMILARITY_THRESHOLD,
-  returns the cached answer immediately without calling the LLM API.
-
-  - Cache entries are stored per course to prevent cross-course answer bleed
-  - Human-resolved escalation answers are stored with priority score 1.0
-  - TTL: 30 days, refreshed on each cache hit
-  - Key scheme:
-      nova:mem:{course_id}:{entry_id}  → JSON payload
-      nova:mem:idx:{course_id}         → list of all entry IDs for that course
-
-  SHORT-TERM MEMORY (Session Context Cache)
-  ──────────────────────────────────────────
-  Caches the last 8 turns of a conversation in Redis to avoid
-  repeated DB queries within the same active session.
-
-  - TTL: 2 hours (refreshed on each access)
-  - Key scheme: nova:session:{conversation_id}
-"""
-
 import json
 import math
+import time
 import uuid
 from typing import Dict, List, Optional, Tuple
 
@@ -50,6 +23,10 @@ MAX_SCAN_ENTRIES = 500
 
 def _cosine_similarity(a: List[float], b: List[float]) -> float:
     """Pure-Python cosine similarity between two pre-normalised vectors."""
+    if len(a) != len(b):
+        raise ValueError(
+            f"Embedding dimension mismatch: {len(a)} != {len(b)}"
+        )
     # Both vectors are L2-normalised by EmbeddingService, so dot product = cosine similarity
     return sum(x * y for x, y in zip(a, b))
 
@@ -67,6 +44,10 @@ class MemoryService:
             )
         return self._redis
 
+    async def initialize(self) -> None:
+        """Pre-initialize the Redis connection on startup to avoid connection races."""
+        await self._get_redis()
+
     # ──────────────────────────────────────────────────────────
     # LONG-TERM MEMORY: Semantic Answer Cache
     # ──────────────────────────────────────────────────────────
@@ -81,6 +62,7 @@ class MemoryService:
         """
         Search the long-term semantic cache for a similar past question.
         Ensures that namespace and corpus_version match to prevent stale/incorrect cache hits.
+        Uses Redis pipelining to avoid N+1 queries.
 
         Returns:
             (answer_text, similarity_score) if a match is found, else None.
@@ -88,20 +70,29 @@ class MemoryService:
         r = await self._get_redis()
         idx_key = f"nova:mem:idx:{course_id}"
 
-        # Fetch the list of cache entry IDs for this course
-        entry_ids = await r.lrange(idx_key, 0, MAX_SCAN_ENTRIES - 1)
+        # Fetch the list of cache entry IDs for this course from Sorted Set (newest first)
+        entry_ids = await r.zrevrange(idx_key, 0, MAX_SCAN_ENTRIES - 1)
         if not entry_ids:
             return None
 
+        # Pipelined batch retrieval to avoid N+1 network requests
+        pipe = r.pipeline()
+        for entry_id in entry_ids:
+            pipe.get(f"nova:mem:{course_id}:{entry_id}")
+        raw_entries = await pipe.execute()
+
         best_score = 0.0
         best_answer = None
+        best_source = None
+        best_entry_key = None
+        expired_ids = []
 
-        for entry_id in entry_ids:
-            entry_key = f"nova:mem:{course_id}:{entry_id}"
-            raw = await r.get(entry_key)
+        for entry_id, raw in zip(entry_ids, raw_entries):
             if not raw:
+                expired_ids.append(entry_id)
                 continue
 
+            entry_key = f"nova:mem:{course_id}:{entry_id}"
             try:
                 entry = json.loads(raw)
             except json.JSONDecodeError:
@@ -117,16 +108,44 @@ class MemoryService:
             if not cached_emb:
                 continue
 
-            sim = _cosine_similarity(query_embedding, cached_emb)
+            try:
+                sim = _cosine_similarity(query_embedding, cached_emb)
+            except ValueError:
+                # Dimension mismatch (e.g. model change)
+                continue
 
-            if sim > best_score:
+            # Prioritization Logic:
+            # 1. Prefer lecturer/human-verified answers if both are above SIMILARITY_THRESHOLD.
+            # 2. Otherwise, prefer the higher similarity score.
+            is_better = False
+            if best_answer is None:
+                is_better = True
+            else:
+                current_is_human = (best_source == "human" and best_score >= SIMILARITY_THRESHOLD)
+                cand_is_human = (entry.get("source") == "human" and sim >= SIMILARITY_THRESHOLD)
+
+                if cand_is_human and not current_is_human:
+                    is_better = True
+                elif not cand_is_human and current_is_human:
+                    is_better = False
+                else:
+                    is_better = sim > best_score
+
+            if is_better:
                 best_score = sim
                 best_answer = entry.get("answer", "")
+                best_source = entry.get("source", "rag")
+                best_entry_key = entry_key
 
-                # Refresh TTL on the matched entry (it's still being used)
-                await r.expire(entry_key, LONG_TERM_TTL)
+        # Asynchronously clean up any expired IDs from the Sorted Set index
+        if expired_ids:
+            await r.zrem(idx_key, *expired_ids)
 
         if best_score >= SIMILARITY_THRESHOLD and best_answer:
+            # Refresh TTL on the matched entry and the index (still actively used)
+            if best_entry_key:
+                await r.expire(best_entry_key, LONG_TERM_TTL)
+            await r.expire(idx_key, LONG_TERM_TTL)
             return best_answer, best_score
 
         return None
@@ -178,14 +197,11 @@ class MemoryService:
         # Store entry with TTL
         await r.set(entry_key, payload, ex=LONG_TERM_TTL)
 
-        # Human answers go to the front of the index (highest priority)
-        if source == "human":
-            await r.lpush(idx_key, entry_id)
-        else:
-            await r.rpush(idx_key, entry_id)
+        # Store in Sorted Set using current timestamp as score to retain chronological order
+        await r.zadd(idx_key, {entry_id: time.time()})
 
-        # Cap the index list to MAX_SCAN_ENTRIES (trim oldest entries)
-        await r.ltrim(idx_key, 0, MAX_SCAN_ENTRIES - 1)
+        # Cap the index sorted set to MAX_SCAN_ENTRIES (trim oldest entries)
+        await r.zremrangebyrank(idx_key, 0, -MAX_SCAN_ENTRIES - 1)
         await r.expire(idx_key, LONG_TERM_TTL)
 
     # ──────────────────────────────────────────────────────────
@@ -219,10 +235,12 @@ class MemoryService:
     ) -> None:
         """
         Store conversation history in Redis for fast retrieval.
+        Enforces a maximum of the last 8 turns (16 messages) to fit session memory guidelines.
         """
         r = await self._get_redis()
         key = f"nova:session:{conversation_id}"
-        await r.set(key, json.dumps(history), ex=SHORT_TERM_TTL)
+        bounded_history = history[-16:]
+        await r.set(key, json.dumps(bounded_history), ex=SHORT_TERM_TTL)
 
     async def invalidate_session(self, conversation_id: str) -> None:
         """Clear session cache for a conversation (e.g., on new message)."""

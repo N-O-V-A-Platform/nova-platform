@@ -33,6 +33,14 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
     loop.run_in_executor(None, _warm_embedding_model)
 
+    # Pre-initialize Redis connection for MemoryService to avoid races on first request
+    from app.api.chats import memory_service
+    try:
+        await memory_service.initialize()
+        print("[NOVA] Redis memory service pre-initialized.")
+    except Exception as e:
+        print(f"[NOVA] Warning: Redis memory service pre-initialization failed: {e}")
+
     # Initialize APScheduler for weekly scrape tasks
     from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
