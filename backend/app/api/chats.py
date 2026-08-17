@@ -156,6 +156,7 @@ async def ask_question(
         query=question_in.question,
         course_id=str(conversation.course_id),
         namespace=namespace,
+        db=db,
         chat_history=chat_history
     )
 
@@ -251,11 +252,24 @@ async def resolve_escalation(
         )
         conv = conv_result.scalars().first()
         if conv:
+            from app.models.resource import KnowledgeBase, Resource
+            kb_result = await db.execute(
+                select(KnowledgeBase.pinecone_namespace)
+                .join(Resource)
+                .where(Resource.course_id == conv.course_id)
+            )
+            namespaces = kb_result.scalars().all()
+            namespace = namespaces[0] if namespaces else f"course_{conv.course_id}"
+
+            corpus_version = await rag_service.get_corpus_version(db, str(conv.course_id), namespace)
+
             await memory_service.store_long_term(
                 question=question.question,
                 answer=response_text,
                 embedding=question_emb,
                 course_id=str(conv.course_id),
+                namespace=namespace,
+                corpus_version=corpus_version,
                 confidence=1.0,
                 source="human"
             )

@@ -75,9 +75,12 @@ class MemoryService:
         self,
         query_embedding: List[float],
         course_id: str,
+        namespace: str,
+        corpus_version: str
     ) -> Optional[Tuple[str, float]]:
         """
         Search the long-term semantic cache for a similar past question.
+        Ensures that namespace and corpus_version match to prevent stale/incorrect cache hits.
 
         Returns:
             (answer_text, similarity_score) if a match is found, else None.
@@ -104,6 +107,12 @@ class MemoryService:
             except json.JSONDecodeError:
                 continue
 
+            # Verify namespace and corpus version match current query context
+            if entry.get("namespace") != namespace:
+                continue
+            if entry.get("corpus_version") != corpus_version:
+                continue
+
             cached_emb = entry.get("embedding")
             if not cached_emb:
                 continue
@@ -128,17 +137,21 @@ class MemoryService:
         answer: str,
         embedding: List[float],
         course_id: str,
+        namespace: str,
+        corpus_version: str,
         confidence: float,
         source: str = "rag"
     ) -> None:
         """
-        Store a Q&A pair in the long-term semantic cache.
+        Store a Q&A pair in the long-term semantic cache with version and namespace scoping.
 
         Args:
             question: The student's original question text.
             answer: The answer (from RAG/LLM or lecturer).
             embedding: The pre-computed question embedding vector.
             course_id: Scopes the cache to a specific course.
+            namespace: The target Pinecone namespace.
+            corpus_version: Combined SHA-256 of all relevant document states.
             confidence: The confidence/similarity score of the answer.
             source: "rag" for LLM-generated, "human" for lecturer-resolved.
         """
@@ -158,6 +171,8 @@ class MemoryService:
             "confidence": confidence,
             "source": source,
             "course_id": course_id,
+            "namespace": namespace,
+            "corpus_version": corpus_version
         })
 
         # Store entry with TTL
