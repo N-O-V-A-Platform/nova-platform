@@ -1,29 +1,61 @@
+"""
+Real semantic embedding service using sentence-transformers (local, free, no API key).
+
+Model: all-MiniLM-L6-v2
+- 384-dimensional dense vectors
+- Excellent semantic similarity performance for English text
+- Runs fully on CPU inside the Docker container
+- ~90MB model download (cached after first run)
+- No quota, no API key, no cost
+"""
+
+import asyncio
+from functools import lru_cache
+from typing import List
+
+
+@lru_cache(maxsize=1)
+def _load_model():
+    """
+    Lazily load the SentenceTransformer model once and cache it for the
+    lifetime of the process. The @lru_cache ensures this is only called once
+    even under concurrent async requests.
+    """
+    from sentence_transformers import SentenceTransformer
+    return SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+
 class EmbeddingService:
     def __init__(self):
-        # Gemini and OpenAI are disabled per request
         pass
 
-    async def get_embedding(self, text: str) -> list[float]:
+    async def get_embedding(self, text: str) -> List[float]:
         """
-        Generates a deterministic 1536-dimensional mock embedding vector based on text hashing.
-        This provides a completely local, fast, and free embedding service without API keys.
-        """
-        import hashlib
-        import random
+        Generate a real 384-dimensional semantic embedding vector for the given text.
+        Uses sentence-transformers/all-MiniLM-L6-v2 running locally on CPU.
 
-        # Clean text
+        Similar questions will produce similar (high cosine similarity) vectors,
+        enabling the semantic memory cache to work correctly.
+        """
         text = text.replace("\n", " ").strip()
 
-        # Seed random generator with the text's SHA256 hash to keep it deterministic
-        seed = int(hashlib.sha256(text.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
-        rng = random.Random(seed)
-
-        # Generate 1536 float values
-        vector = [rng.uniform(-0.1, 0.1) for _ in range(1536)]
-
-        # Normalize the vector (so cosine similarity queries behave correctly in Pinecone)
-        magnitude = sum(x * x for x in vector) ** 0.5
-        if magnitude > 0:
-            vector = [x / magnitude for x in vector]
-
+        loop = asyncio.get_event_loop()
+        vector = await loop.run_in_executor(
+            None,
+            lambda: _load_model().encode(text, normalize_embeddings=True).tolist()
+        )
         return vector
+
+    async def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
+        """
+        Batch encode multiple texts efficiently in a single model pass.
+        More efficient than calling get_embedding() in a loop.
+        """
+        cleaned = [t.replace("\n", " ").strip() for t in texts]
+
+        loop = asyncio.get_event_loop()
+        vectors = await loop.run_in_executor(
+            None,
+            lambda: _load_model().encode(cleaned, normalize_embeddings=True).tolist()
+        )
+        return vectors
