@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -103,3 +103,67 @@ async def reject_lecturer(
     db.add(user)
     await db.commit()
     return {"message": f"Lecturer {user.first_name} {user.last_name} registration request rejected."}
+
+
+# Scraper endpoints
+@router.post("/scrape/trigger")
+async def trigger_scrape(
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin", "Lecturer"])),
+):
+    from app.workers.scraper import scrape_worker
+    from app.db.session import AsyncSessionLocal
+
+    if scrape_worker.is_running:
+        return {"status": "already_running", "message": "Scraper is already running"}
+
+    # Run in background to avoid HTTP timeout
+    async def run_in_bg():
+        async with AsyncSessionLocal() as session:
+            await scrape_worker.run_full_scrape(session)
+
+    background_tasks.add_task(run_in_bg)
+    return {"status": "started", "message": "Scraper started in background"}
+
+
+@router.get("/scrape/status")
+async def get_scrape_status(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin", "Lecturer"])),
+):
+    from app.workers.scraper import scrape_worker
+    from app.models.scrape import ScrapedSource
+    
+    # Query summary metrics
+    total_result = await db.execute(select(ScrapedSource))
+    sources = total_result.scalars().all()
+    
+    success_count = sum(1 for s in sources if s.status == "success")
+    error_count = sum(1 for s in sources if s.status == "error")
+    total_chunks = sum(s.chunk_count for s in sources)
+    
+    last_run = None
+    for s in sources:
+        if s.last_scraped_at:
+            if not last_run or s.last_scraped_at > last_run:
+                last_run = s.last_scraped_at
+                
+    return {
+        "is_running": scrape_worker.is_running,
+        "total_sources": len(sources),
+        "success_count": success_count,
+        "error_count": error_count,
+        "total_chunks": total_chunks,
+        "last_run": last_run.isoformat() if last_run else None
+    }
+
+
+@router.get("/scrape/sources")
+async def get_scraped_sources(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin", "Lecturer"])),
+):
+    from app.models.scrape import ScrapedSource
+    result = await db.execute(select(ScrapedSource).order_by(ScrapedSource.created_at.desc()))
+    return result.scalars().all()
