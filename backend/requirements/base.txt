@@ -25,6 +25,13 @@ google-auth>=2.29.0
 # Local semantic embeddings (no API key required, runs on CPU)
 sentence-transformers>=2.7.0
 
+# Web scraping for UiPath docs/community content ingestion
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# Background task scheduling (weekly scrape job)
+apscheduler>=3.10.0
+
 requests>=2.31.0
 httpx>=0.24.0
 
