@@ -21,9 +21,11 @@ from app.schemas.ai import (
 )
 from app.auth.dependencies import get_current_user, RoleChecker
 from app.ai.rag_service import RAGService
+from app.ai.memory_service import MemoryService
 
 router = APIRouter(prefix="/chats", tags=["AI Conversations"])
 rag_service = RAGService()
+memory_service = MemoryService()
 
 @router.post("/", response_model=AIConversationResponse, status_code=status.HTTP_201_CREATED)
 async def create_conversation(
@@ -127,21 +129,29 @@ async def ask_question(
     # If no indexed namespaces yet, default to a course-specific namespace string
     namespace = namespaces[0] if namespaces else f"course_{course.id}"
 
-    # 3. Retrieve conversation history (last 5 QAs) for context
-    history_result = await db.execute(
-        select(Question)
-        .where(Question.conversation_id == conversation_id)
-        .order_by(Question.created_at.desc())
-        .limit(5)
-    )
-    history_list = list(reversed(history_result.scalars().all()))
-    chat_history = []
-    for h in history_list:
-        chat_history.append({"role": "user", "content": h.question})
-        if h.response:
-            chat_history.append({"role": "assistant", "content": h.response})
+    # 3. Retrieve conversation history (last 8 QAs) — check Redis first, then DB
+    conv_id_str = str(conversation_id)
+    chat_history = await memory_service.get_session_history(conv_id_str)
 
-    # 4. Generate RAG answer
+    if chat_history is None:
+        # Cache miss — fetch from database
+        history_result = await db.execute(
+            select(Question)
+            .where(Question.conversation_id == conversation_id)
+            .order_by(Question.created_at.desc())
+            .limit(8)
+        )
+        history_list = list(reversed(history_result.scalars().all()))
+        chat_history = []
+        for h in history_list:
+            chat_history.append({"role": "user", "content": h.question})
+            if h.response:
+                chat_history.append({"role": "assistant", "content": h.response})
+
+        # Persist to Redis session cache for fast future lookups
+        await memory_service.set_session_history(conv_id_str, chat_history)
+
+    # 4. Generate RAG answer (checks long-term memory cache before calling LLM)
     answer, confidence_score, should_escalate = await rag_service.get_response(
         query=question_in.question,
         course_id=str(conversation.course_id),
@@ -160,7 +170,10 @@ async def ask_question(
     await db.commit()
     await db.refresh(question_record)
 
-    # 6. Trigger escalation if confidence is low
+    # 6. Invalidate session cache so next fetch includes the new message
+    await memory_service.invalidate_session(conv_id_str)
+
+    # 7. Trigger escalation if confidence is low
     if should_escalate:
         escalation = Escalation(
             question_id=question_record.id,
@@ -221,7 +234,32 @@ async def resolve_escalation(
 
     # Update escalation status
     escalation.status = "Resolved"
-    
+
     await db.commit()
     await db.refresh(question)
+
+    # Store human-resolved answer in long-term memory with top priority
+    # so future identical questions are answered immediately without LLM call
+    try:
+        from app.ai.embeddings import EmbeddingService
+        emb_service = EmbeddingService()
+        question_emb = await emb_service.get_embedding(question.question)
+
+        # Find the course_id via conversation
+        conv_result = await db.execute(
+            select(AIConversation).where(AIConversation.id == question.conversation_id)
+        )
+        conv = conv_result.scalars().first()
+        if conv:
+            await memory_service.store_long_term(
+                question=question.question,
+                answer=response_text,
+                embedding=question_emb,
+                course_id=str(conv.course_id),
+                confidence=1.0,
+                source="human"
+            )
+    except Exception:
+        pass  # Non-fatal — memory storage failure should not break resolution
+
     return question
