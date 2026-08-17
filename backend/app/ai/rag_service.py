@@ -147,7 +147,24 @@ class RAGService:
         best_score = 0.0
         context_chunks = []
         for m in matches:
-            context_chunks.append(m["text"])
+            text = m["text"]
+            meta_parts = []
+            if m.get("product"):
+                meta_parts.append(f"Product: {m['product']}")
+            if m.get("version"):
+                meta_parts.append(f"Version: {m['version']}")
+            if m.get("title"):
+                meta_parts.append(f"Title: {m['title']}")
+            if m.get("source_url"):
+                meta_parts.append(f"Source URL: {m['source_url']}")
+                
+            if meta_parts:
+                meta_str = ", ".join(meta_parts)
+                formatted_chunk = f"[{meta_str}]\n{text}"
+            else:
+                formatted_chunk = text
+
+            context_chunks.append(formatted_chunk)
             if m["score"] > best_score:
                 best_score = m["score"]
 
@@ -166,7 +183,8 @@ Instructions:
 2. If the answer cannot be found or reasonably inferred from the Context, reply exactly with: "{escalation_flag_phrase}"
 3. Do not make up facts, URLs, or hallucinate answers not supported by the context.
 4. Keep your response clear, structured, and student-friendly.
-5. Use the conversation history for continuity, but always prioritise the provided Context.
+5. Always cite the specific source URL, product name, and version if available in the context (e.g. "According to UiPath Studio 2023.10 documentation (https://docs.uipath.com/...)...").
+6. Use the conversation history for continuity, but always prioritise the provided Context.
 
 Context:
 {context_text}

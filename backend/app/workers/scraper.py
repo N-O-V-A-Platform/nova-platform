@@ -1,11 +1,12 @@
 """
-N.O.V.A. UiPath Content Scraper Worker
+N.O.V.A. UiPath Content Ingestion Worker
 
-Silently scrapes publicly available UiPath documentation and community
-content on a weekly schedule, chunks and embeds the text, and upserts
-it into Pinecone under the "uipath_global" namespace.
+Performs targeted indexing of publicly available UiPath documentation on a weekly schedule,
+chunking and embedding the text for search, and upserting it into Pinecone under the 
+"uipath_global" namespace.
 
-All sources are publicly accessible — no login or ToS violation.
+Note: Respects robots.txt compliance and rate limiting (politeness delays). Always verify
+content reproduction terms before public deployment.
 
 Schedule: Every Sunday at 02:00 (configured in main.py via APScheduler)
 Manual trigger: POST /api/v1/admin/scrape/trigger
@@ -89,16 +90,54 @@ class ScrapeWorker:
         self.embedding_service = EmbeddingService()
         self.vector_store = PineconeVectorStore()
         self._running = False
+        self._robot_parsers = {}
 
     @property
     def is_running(self) -> bool:
         return self._running
+
+    async def _is_allowed_by_robots(self, url: str) -> bool:
+        """
+        Check robots.txt of the domain to verify if scraping is allowed.
+        Caches RobotFileParser instances to minimize HTTP requests.
+        """
+        from urllib.robotparser import RobotFileParser
+        from urllib.parse import urlparse
+
+        parsed_url = urlparse(url)
+        netloc = parsed_url.netloc
+        scheme = parsed_url.scheme
+
+        if not netloc or not scheme:
+            return True
+
+        if netloc not in self._robot_parsers:
+            robots_url = f"{scheme}://{netloc}/robots.txt"
+            rp = RobotFileParser()
+            try:
+                headers = {"User-Agent": "Mozilla/5.0 (compatible; NOVABot/1.0; Educational AI Platform)"}
+                async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                    response = await client.get(robots_url, headers=headers)
+                if response.status_code == 200:
+                    rp.parse(response.text.splitlines())
+                else:
+                    rp.parse([])
+            except Exception as e:
+                logger.warning(f"[Scraper] Failed to fetch/parse robots.txt for {netloc}: {e}")
+                rp.parse([])
+            self._robot_parsers[netloc] = rp
+
+        return self._robot_parsers[netloc].can_fetch("NOVABot", url)
 
     async def scrape_url(self, url: str) -> Optional[str]:
         """
         Fetch a URL and extract clean human-readable text from the page body.
         Returns None on failure.
         """
+        if not await self._is_allowed_by_robots(url):
+            logger.warning(f"[Scraper] Disallowed by robots.txt for URL: {url}")
+            return None
+
         headers = {
             "User-Agent": "Mozilla/5.0 (compatible; NOVABot/1.0; Educational AI Platform)",
             "Accept": "text/html,application/xhtml+xml",
@@ -149,15 +188,19 @@ class ScrapeWorker:
         """
         url = source["url"]
         title = source["title"]
-
-        # Deterministic source ID from URL hash
         source_id = hashlib.md5(url.encode()).hexdigest()
+
+        # Query existing record first to get the previous chunk count
+        result_obj = await db.execute(
+            select(ScrapedSource).where(ScrapedSource.url == url)
+        )
+        record = result_obj.scalars().first()
 
         try:
             # 1. Fetch page text
             text = await self.scrape_url(url)
             if not text:
-                return {"url": url, "status": "error", "error": "Empty or failed to fetch"}
+                return {"url": url, "status": "error", "error": "Empty, failed to fetch, or disallowed by robots.txt"}
 
             # 2. Chunk the text
             chunks = DocumentProcessor.chunk_text(text, chunk_size=800, chunk_overlap=150)
@@ -169,6 +212,27 @@ class ScrapeWorker:
             # 3. Batch embed
             embeddings = await self.embedding_service.get_embeddings_batch(chunk_texts)
 
+            # Parse product and version from URL
+            product = "UiPath"
+            version = "Latest"
+            
+            lower_url = url.lower()
+            if "studio" in lower_url:
+                product = "Studio"
+            elif "orchestrator" in lower_url:
+                product = "Orchestrator"
+            elif "robot" in lower_url:
+                product = "Robot"
+            elif "activities" in lower_url:
+                product = "Activities"
+            elif "document-understanding" in lower_url:
+                product = "Document Understanding"
+                
+            import re
+            ver_match = re.search(r'/(20\d{2}\.\d{1,2}|latest|v\d+)/', lower_url)
+            if ver_match:
+                version = ver_match.group(1).capitalize()
+
             # 4. Upsert into Pinecone
             # Use source_id prefix so we can delete/replace on re-scrape
             pinecone_vectors = []
@@ -179,6 +243,8 @@ class ScrapeWorker:
                     "metadata": {
                         "source_url": url,
                         "title": title,
+                        "product": product,
+                        "version": version,
                         "text": chunk["text"],
                         "chunk_index": i,
                     }
@@ -188,16 +254,24 @@ class ScrapeWorker:
             if self.vector_store.pc:
                 index = self.vector_store._get_index(self.vector_store.dimension)
                 loop = asyncio.get_event_loop()
+
+                # Clean up old vectors if chunk count has changed to prevent orphaned chunks
+                if record and record.chunk_count > 0:
+                    old_ids = [f"{source_id}_{i}" for i in range(record.chunk_count)]
+                    try:
+                        await loop.run_in_executor(
+                            None,
+                            lambda: index.delete(ids=old_ids, namespace=UIPATH_NAMESPACE)
+                        )
+                    except Exception as de:
+                        logger.warning(f"[Scraper] Failed to delete old vectors for {url}: {de}")
+
                 await loop.run_in_executor(
                     None,
                     lambda: index.upsert(vectors=pinecone_vectors, namespace=UIPATH_NAMESPACE)
                 )
 
             # 5. Upsert ScrapedSource record
-            result_obj = await db.execute(
-                select(ScrapedSource).where(ScrapedSource.url == url)
-            )
-            record = result_obj.scalars().first()
             now = datetime.now(timezone.utc)
 
             if record:

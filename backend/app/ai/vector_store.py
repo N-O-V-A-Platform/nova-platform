@@ -110,7 +110,11 @@ class PineconeVectorStore:
                 "text": metadata.get("text", ""),
                 "resource_id": metadata.get("resource_id", ""),
                 "course_id": metadata.get("course_id", ""),
-                "chunk_index": metadata.get("chunk_index", 0)
+                "chunk_index": metadata.get("chunk_index", 0),
+                "source_url": metadata.get("source_url", ""),
+                "product": metadata.get("product", ""),
+                "version": metadata.get("version", ""),
+                "title": metadata.get("title", "")
             })
         return results
 
