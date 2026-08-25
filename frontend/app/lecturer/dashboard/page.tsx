@@ -182,12 +182,7 @@ export default function LecturerDashboard() {
             </p>
           </div>
 
-          <button
-            onClick={toggleTheme}
-            className="sketch-btn-secondary px-4 py-2 font-handwriting flex items-center gap-2"
-          >
-            {theme === "light" ? "Blackboard Mode" : "Whiteboard Mode"}
-          </button>
+
         </header>
 
         {msg && (

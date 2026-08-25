@@ -176,22 +176,7 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
  
         {/* Footer controls inside sidebar */}
         <div className="mt-6 pt-4 border-t border-dashed border-zinc-200 dark:border-zinc-800 space-y-3">
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-center gap-2 py-2 border-2 border-black dark:border-zinc-700 rounded-md font-handwriting text-sm bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-none"
-          >
-            {theme === "light" ? (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                <span>Dark Board</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                <span>Light Board</span>
-              </>
-            )}
-          </button>
+
  
           <button
             onClick={logout}

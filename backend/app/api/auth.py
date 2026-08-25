@@ -233,6 +233,41 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             detail="Incorrect email or password"
         )
 
+    # Auto-promote/verify admin email in case it was registered beforehand or lacks proper state
+    if _is_admin_email(user.email):
+        admin_role_result = await db.execute(select(Role).where(Role.name == "Admin"))
+        admin_role = admin_role_result.scalars().first()
+        if not admin_role:
+            admin_role = Role(name="Admin", description="Administrator Role")
+            db.add(admin_role)
+            await db.commit()
+            await db.refresh(admin_role)
+        
+        needs_commit = False
+        if not user.is_superuser:
+            user.is_superuser = True
+            needs_commit = True
+        if not user.role or user.role.name != "Admin":
+            user.role = admin_role
+            needs_commit = True
+        if not user.is_email_verified:
+            user.is_email_verified = True
+            needs_commit = True
+        if not user.is_active:
+            user.is_active = True
+            needs_commit = True
+        if user.status != "Active":
+            user.status = "Active"
+            needs_commit = True
+        if not user.is_onboarded:
+            user.is_onboarded = True
+            needs_commit = True
+            
+        if needs_commit:
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+
     if not user.is_email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -559,9 +594,13 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
     if user.is_email_verified:
         if user.is_active:
             access_token = create_access_token(
-                data={"sub": user.email, "role": user.role.name if user.role else "Student"}
+                subject=user.email,
+                role=user.role.name if user.role else "Student",
+                institution_id=str(user.institution_id) if user.institution_id else None,
+                first_name=user.first_name,
+                last_name=user.last_name
             )
-            refresh_token = create_refresh_token(data={"sub": user.email})
+            refresh_token, _ = create_refresh_token(subject=user.email)
             return {
                 "message": "Email is already verified. Logging you in...",
                 "access_token": access_token,
@@ -598,9 +637,13 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
 
     if user.is_active:
         access_token = create_access_token(
-            data={"sub": user.email, "role": user.role.name if user.role else "Student"}
+            subject=user.email,
+            role=user.role.name if user.role else "Student",
+            institution_id=str(user.institution_id) if user.institution_id else None,
+            first_name=user.first_name,
+            last_name=user.last_name
         )
-        refresh_token = create_refresh_token(data={"sub": user.email})
+        refresh_token, _ = create_refresh_token(subject=user.email)
         return {
             "message": "Email verified successfully! Logging you in...",
             "access_token": access_token,

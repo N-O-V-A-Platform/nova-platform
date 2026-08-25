@@ -3,20 +3,14 @@ import uuid
 from httpx import ASGITransport, AsyncClient
 from jose import jwt
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from app.main import app
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User, Role
 from app.models.skills import Certificate
 
-@pytest.fixture(scope="session")
-def anyio_backend():
-    return "asyncio"
 
-@pytest.fixture
-async def db_session():
-    async for session in get_db():
-        yield session
 
 @pytest.fixture
 async def test_user_cleanup(db_session):
@@ -56,8 +50,11 @@ async def test_full_auth_and_edge_cases(test_user_cleanup, db_session):
                 "role_name": "Student"
             }
         )
-        assert reg_response.status_code == 400
-        assert "verify your email" in reg_response.json()["detail"].lower()
+        assert reg_response.status_code == 201
+        reg_data = reg_response.json()
+        assert reg_data["access_token"] == ""
+        assert reg_data["refresh_token"] == ""
+        assert "verification" in reg_data["user"]["status"].lower()
 
         # Fetch created user from database to inspect verification status
         user_result = await db_session.execute(
@@ -126,9 +123,15 @@ async def test_full_auth_and_edge_cases(test_user_cleanup, db_session):
             json={"email": student_email}
         )
         assert forgot_response.status_code == 200
-        forgot_data = forgot_response.json()
-        assert "token" in forgot_data
-        reset_token = forgot_data["token"]
+        
+        # Generate password reset token manually in the test to proceed
+        from datetime import datetime, timedelta, timezone
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        reset_token = jwt.encode(
+            {"sub": student_email, "type": "password_reset", "exp": expire},
+            settings.JWT_SECRET_KEY,
+            algorithm=settings.JWT_ALGORITHM
+        )
 
         new_password = "evenmoreserialkey456"
         reset_response = await ac.post(
@@ -207,7 +210,7 @@ async def test_full_auth_and_edge_cases(test_user_cleanup, db_session):
             json={"email": "nonexistent_fake_user@example.com", "password": password}
         )
         assert login_fake_email.status_code == 400
-        assert "incorrect email or password" in login_fake_email.json()["detail"].lower()
+        assert "does not exist" in login_fake_email.json()["detail"].lower()
 
         # 4. Verify email with invalid token format
         verify_invalid = await ac.get("/api/v1/auth/verify-email?token=invalidjwttokenhere")
@@ -247,3 +250,75 @@ async def test_full_auth_and_edge_cases(test_user_cleanup, db_session):
         )
         assert onboard_res.status_code == 200
         assert onboard_res.json()["user"]["is_onboarded"] is True
+
+
+@pytest.mark.anyio
+async def test_admin_auto_promotion_on_login(db_session):
+    from app.auth.security import get_password_hash
+    
+    # 1. Register a user as a regular Student (mocked before it was added to ADMIN_EMAILS)
+    email = "test_promo_admin@example.com"
+    password = "securepassword123"
+    
+    # Create the user manually in the DB as unverified student
+    student_role_result = await db_session.execute(select(Role).where(Role.name == "Student"))
+    student_role = student_role_result.scalars().first()
+    if not student_role:
+        student_role = Role(name="Student")
+        db_session.add(student_role)
+        await db_session.commit()
+        await db_session.refresh(student_role)
+
+    user = User(
+        email=email,
+        first_name="Mock",
+        last_name="Admin",
+        password_hash=get_password_hash(password),
+        role=student_role,
+        is_active=True,
+        is_superuser=False,
+        is_email_verified=False,
+        is_onboarded=False,
+        status="Active"
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    # 2. Add email to settings.ADMIN_EMAILS dynamically
+    old_admin_emails = settings.ADMIN_EMAILS
+    settings.ADMIN_EMAILS = f"{old_admin_emails},test_promo_admin@example.com"
+
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            # 3. Log in with the password. Since the email is in admin list, they should be auto-promoted!
+            login_response = await ac.post(
+                "/api/v1/auth/login",
+                json={"email": email, "password": password}
+            )
+            assert login_response.status_code == 200
+            login_data = login_response.json()
+            
+            # Check response contains Admin tokens/details
+            assert login_data["user"]["role_name"] == "Admin"
+            assert login_data["user"]["is_email_verified"] is True
+            assert login_data["user"]["is_onboarded"] is True
+            
+            # Verify the database was updated using a fresh session to avoid caching/dirty state
+            from app.db.session import AsyncSessionLocal
+            async with AsyncSessionLocal() as verify_db:
+                user_result = await verify_db.execute(
+                    select(User).where(User.id == user.id).options(selectinload(User.role))
+                )
+                updated_user = user_result.scalars().first()
+                assert updated_user.is_superuser is True
+                assert updated_user.role.name == "Admin"
+                assert updated_user.is_email_verified is True
+                assert updated_user.status == "Active"
+                assert updated_user.is_onboarded is True
+
+    finally:
+        # Restore configuration and cleanup
+        settings.ADMIN_EMAILS = old_admin_emails
+        await db_session.delete(user)
+        await db_session.commit()

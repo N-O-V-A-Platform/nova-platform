@@ -104,12 +104,6 @@ export default function UiPathJourneyPage() {
           <div className="sketch-card py-1.5 px-4 bg-yellow-100 dark:bg-yellow-950/40 border border-yellow-500 rounded text-sm font-casual font-bold">
             XP: {uipathJourney ? uipathJourney.completed_count * 200 : 0}
           </div>
-          <button
-            onClick={toggleTheme}
-            className="sketch-btn-secondary px-4 py-2 font-handwriting text-sm"
-          >
-            {theme === "light" ? "Dark Board" : "Light Board"}
-          </button>
         </div>
       </header>
 

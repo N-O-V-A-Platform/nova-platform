@@ -91,6 +91,11 @@ app.include_router(
     prefix=settings.API_V1_STR,
 )
 
+from fastapi.staticfiles import StaticFiles
+import os
+os.makedirs("static/uploads", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to N.O.V.A API"}
