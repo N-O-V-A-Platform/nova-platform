@@ -168,7 +168,14 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
         </div>
  
         {/* Footer controls inside sidebar */}
-        <div className="mt-6 pt-4 border-t border-dashed border-zinc-200 dark:border-zinc-800 space-y-3">
+        <div className="mt-6 pt-4 border-t border-dashed border-zinc-200 dark:border-zinc-800 space-y-2.5">
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-center gap-2 py-2 border-2 border-black dark:border-zinc-700 rounded-md font-handwriting text-sm bg-[#FEF08A] text-black hover:bg-yellow-300 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          >
+            <span>{theme === "dark" ? "☀️ Switch to Whiteboard (Light)" : "🌙 Switch to Chalkboard (Dark)"}</span>
+          </button>
+
           <button
             onClick={logout}
             className="w-full flex items-center justify-center gap-2 py-2 border-2 border-black dark:border-zinc-700 rounded-md font-handwriting text-sm bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 border-rose-300 dark:border-rose-900/50 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-none"
