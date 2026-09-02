@@ -10,8 +10,8 @@ export default function StudentLeaderboardPage() {
         <h2 className="text-3xl md:text-4xl font-bold font-handwriting text-[#E75A3D]">
           Global Leaderboard
         </h2>
-        <p className="text-base font-casual text-zinc-650 dark:text-zinc-400 mt-1">
-          Compete with your classmates in completing UiPath Academy verification paths.
+        <p className="text-sm font-casual text-zinc-650 dark:text-zinc-400 mt-1">
+          Top 5 students ranked by AI Teacher Studio XP, misconception remedies, and learning milestones.
         </p>
       </div>
 

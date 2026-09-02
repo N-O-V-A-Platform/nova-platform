@@ -30,6 +30,9 @@ export default function StudentCoursesPage() {
       const enrolled = (await authService.getEnrolledCourses()) as unknown as Course[];
 
       setCourses(enrolled);
+      if (enrolled.length > 0 && !selectedCourse) {
+        handleViewDetails(enrolled[0]);
+      }
 
       const enrolledIds = new Set(enrolled.map((c) => c.id));
       const available = allCourses.filter((c) => !enrolledIds.has(c.id));
@@ -43,14 +46,13 @@ export default function StudentCoursesPage() {
       }
     } catch (err) {
       console.error("Failed to load courses:", err);
-      // Fallback
       const fallbackCourses = [
-        { id: "11111111-1111-1111-1111-111111111111", title: "RPA Starter", code: "UI-RPA-1", semester: 1, credits: 3, lecturer: { first_name: "UiPath", last_name: "Instructor" } }
+        { id: "11111111-1111-1111-1111-111111111111", title: "Artificial Intelligence Essentials", code: "CS-AI-101", semester: 1, credits: 4, lecturer: { first_name: "Dr. Sarah", last_name: "Chen" } }
       ];
       setCourses(fallbackCourses);
+      setSelectedCourse(fallbackCourses[0]);
       setAvailableCourses([
-        { id: "22222222-2222-2222-2222-222222222222", title: "UiPath Studio for Beginners", code: "UI-STU-2", semester: 1, credits: 3, lecturer: { first_name: "UiPath", last_name: "Instructor" } },
-        { id: "33333333-3333-3333-3333-333333333333", title: "Variables, Arguments & Control Flow", code: "UI-VAR-3", semester: 1, credits: 4, lecturer: { first_name: "UiPath", last_name: "Instructor" } }
+        { id: "22222222-2222-2222-2222-222222222222", title: "Data Structures & Algorithms", code: "CS-DSA-201", semester: 1, credits: 4, lecturer: { first_name: "Prof. Alan", last_name: "Turing" } },
       ]);
     } finally {
       setLoading(false);
@@ -65,11 +67,11 @@ export default function StudentCoursesPage() {
     try {
       setEnrollMsg("");
       await authService.enrollCourse(courseId);
-      setEnrollMsg("Enrolled successfully! Opening course materials...");
+      setEnrollMsg("Enrolled successfully!");
       setTimeout(() => {
         fetchCourses(courseId);
         setEnrollMsg("");
-      }, 1000);
+      }, 800);
     } catch (err: any) {
       setEnrollMsg(`Enrollment failed: ${err.message}`);
     }
@@ -85,8 +87,8 @@ export default function StudentCoursesPage() {
     } catch (err) {
       console.error("Failed to load resources:", err);
       setResources([
-        { id: "101", file_name: "Lecture 1: Intro.pdf", file_type: "pdf", storage_url: "#" },
-        { id: "102", file_name: "Lecture 2: Core Architecture.pptx", file_type: "slides", storage_url: "#" },
+        { id: "101", file_name: "Lecture 1: Core Fundamentals.pdf", file_type: "pdf", storage_url: "#" },
+        { id: "102", file_name: "Lecture 2: Slide Deck Architecture.pptx", file_type: "slides", storage_url: "#" },
       ]);
     } finally {
       setLoadingResources(false);
@@ -96,110 +98,119 @@ export default function StudentCoursesPage() {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center font-handwriting text-2xl">
-        Erasing blackboard...
+        Loading Course Hub...
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl md:text-4xl font-bold font-handwriting text-[#E75A3D]">
-          My Course Dashboard
-        </h2>
-        <p className="font-casual text-base text-zinc-500 dark:text-zinc-400 mt-1.5">
-          Review slide materials and enroll in new syllabus options.
-        </p>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex justify-between items-center bg-white dark:bg-zinc-900 p-4 border-2 border-black rounded-xl">
+        <div>
+          <h2 className="text-2xl font-bold font-handwriting text-[#E75A3D]">
+            Course Dashboard & Slide Repository
+          </h2>
+          <p className="font-casual text-xs text-zinc-500 mt-0.5">
+            Select courses to inspect lecture slides and grounded materials for AI Teacher sessions.
+          </p>
+        </div>
       </div>
 
       {enrollMsg && (
-        <div className="p-4 border-2 border-black bg-[#FEF08A] text-black font-casual text-sm rounded-md shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-bold">
+        <div className="p-3 border-2 border-black bg-[#FEF08A] text-black font-casual text-xs rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-bold">
           {enrollMsg}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Enrolled Courses list */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className="sketch-card p-6 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg">
-            <h3 className="text-2xl font-bold font-handwriting mb-5 border-b border-dashed border-zinc-200 dark:border-zinc-800 pb-2.5 flex items-center gap-2.5">
-              <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <span>Enrolled Classes ({courses.length})</span>
+      {/* 3-Column Compact Layout fitting on screen */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Col 1: Enrolled Courses */}
+        <div className="sketch-card p-4 bg-white dark:bg-zinc-900 border-2 border-black rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold font-handwriting mb-3 border-b-2 border-black pb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>My Classes</span>
+              </span>
+              <span className="text-xs bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded font-mono font-bold">
+                {courses.length}
+              </span>
             </h3>
 
-            <div className="space-y-5">
-              {courses.map((course) => (
-                <div
-                  key={course.id}
-                  className={`p-5 border-2 rounded-lg transition-all flex justify-between items-center ${selectedCourse?.id === course.id
-                      ? "border-[#E75A3D] bg-orange-50/10"
-                      : "border-black dark:border-zinc-800"
+            <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+              {courses.map((course) => {
+                const isSelected = selectedCourse?.id === course.id;
+                return (
+                  <div
+                    key={course.id}
+                    onClick={() => handleViewDetails(course)}
+                    className={`p-3 border-2 rounded-lg transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-[#E75A3D] bg-orange-50/40 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        : "border-black hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
                     }`}
-                >
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="bg-[#FEF08A] dark:bg-yellow-950 text-black dark:text-yellow-200 text-xs font-bold px-2 py-0.5 border border-black rounded font-casual">
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="bg-[#FEF08A] text-black text-[10px] font-bold px-1.5 py-0.5 border border-black rounded font-casual">
                         {course.code}
                       </span>
-                      <span className="text-sm text-zinc-400 font-casual">
+                      <span className="text-[11px] text-zinc-500 font-casual">
                         Sem {course.semester} • {course.credits} Credits
                       </span>
                     </div>
-                    <h4 className="font-bold font-handwriting text-xl mt-2">
+                    <h4 className="font-bold font-handwriting text-base mt-1 text-black dark:text-white leading-snug">
                       {course.title}
                     </h4>
-                    <p className="text-sm font-casual text-zinc-500 dark:text-zinc-400 mt-1">
-                      Lecturer: {course.lecturer?.first_name} {course.lecturer?.last_name}
+                    <p className="text-xs font-casual text-zinc-500 mt-0.5">
+                      {course.lecturer?.first_name ? `Lecturer: ${course.lecturer.first_name} ${course.lecturer.last_name}` : "Faculty Assigned"}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleViewDetails(course)}
-                    className="sketch-btn-primary py-1.5 px-4 font-handwriting text-sm whitespace-nowrap shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                  >
-                    View Materials
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
+        </div>
 
-          {/* Browse Available Courses */}
-          <div className="sketch-card p-6 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg">
-            <h3 className="text-2xl font-bold font-handwriting mb-5 border-b border-dashed border-zinc-200 dark:border-zinc-800 pb-2.5 flex items-center gap-2.5">
-              <svg className="w-6 h-6 text-[#E75A3D]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span>Register New Courses</span>
+        {/* Col 2: Register New Courses */}
+        <div className="sketch-card p-4 bg-white dark:bg-zinc-900 border-2 border-black rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold font-handwriting mb-3 border-b-2 border-black pb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-[#E75A3D]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Available Catalog</span>
+              </span>
+              <span className="text-xs bg-orange-100 dark:bg-orange-950 text-[#E75A3D] px-2 py-0.5 rounded font-mono font-bold">
+                {availableCourses.length}
+              </span>
             </h3>
+
             {availableCourses.length === 0 ? (
-              <p className="text-sm font-casual text-zinc-400 py-6 text-center">
-                All available courses registered!
+              <p className="text-xs font-casual text-zinc-400 py-10 text-center italic">
+                All catalog courses registered!
               </p>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
                 {availableCourses.map((course) => (
                   <div
                     key={course.id}
-                    className="p-5 border-2 border-black dark:border-zinc-800 rounded-lg flex justify-between items-center"
+                    className="p-3 border-2 border-black rounded-lg flex items-center justify-between gap-2"
                   >
                     <div>
-                      <div className="flex items-center gap-2.5">
-                        <span className="bg-zinc-100 dark:bg-zinc-800 text-xs font-bold px-2 py-0.5 border border-zinc-300 dark:border-zinc-700 rounded font-casual">
-                          {course.code}
-                        </span>
-                        <span className="text-sm text-zinc-400 font-casual">
-                          Sem {course.semester} • {course.credits} Credits
-                        </span>
-                      </div>
-                      <h4 className="font-bold font-handwriting text-xl mt-2">
+                      <span className="bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold px-1.5 py-0.5 border border-black rounded font-casual">
+                        {course.code}
+                      </span>
+                      <h4 className="font-bold font-handwriting text-sm mt-1 text-black dark:text-white leading-snug">
                         {course.title}
                       </h4>
                     </div>
                     <button
                       onClick={() => handleEnroll(course.id)}
-                      className="sketch-btn-secondary py-2 px-4 font-handwriting text-sm font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      className="sketch-btn-secondary py-1 px-3 font-handwriting text-xs font-bold whitespace-nowrap"
                     >
                       Enroll +
                     </button>
@@ -210,54 +221,55 @@ export default function StudentCoursesPage() {
           </div>
         </div>
 
-        {/* Right column: Selected Course details */}
-        <div>
+        {/* Col 3: Selected Course Slides & Resources */}
+        <div className="sketch-card p-4 bg-white dark:bg-zinc-900 border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           {selectedCourse ? (
-            <div className="sketch-card p-6 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-none min-h-[350px]">
-              <h3 className="text-2xl font-bold font-handwriting text-[#E75A3D] mb-1">
-                {selectedCourse.title}
-              </h3>
-              <p className="text-sm font-casual text-zinc-400 mb-5">
-                Course Materials & Slides
-              </p>
+            <div>
+              <div className="border-b-2 border-black pb-2 mb-3">
+                <span className="text-[10px] text-[#E75A3D] font-mono font-bold uppercase tracking-wider">
+                  Course Material Inspection
+                </span>
+                <h3 className="text-xl font-bold font-handwriting text-black dark:text-white leading-tight">
+                  {selectedCourse.title}
+                </h3>
+              </div>
 
               {loadingResources ? (
-                <div className="text-center py-16 font-handwriting text-base text-zinc-400">
-                  Scanning folders...
+                <div className="text-center py-12 font-handwriting text-sm text-zinc-400">
+                  Scanning lecture slides...
                 </div>
               ) : resources.length === 0 ? (
-                <div className="text-center py-16 font-casual text-sm text-zinc-400">
-                  No materials uploaded for this course yet.
+                <div className="text-center py-12 font-casual text-xs text-zinc-400 italic">
+                  No slides uploaded for this course yet.
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
                   {resources.map((res) => (
                     <a
                       key={res.id}
                       href={res.storage_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-4 border border-black dark:border-zinc-700 rounded-md block hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
+                      className="p-3 border-2 border-black rounded-lg block hover:bg-yellow-50/50 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-zinc-500">
+                      <div className="flex items-center gap-2.5">
+                        <span className="shrink-0">
                           {res.file_type === "pdf" ? (
-                            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 9h1.5m1.5 0H13m-4 4h4m-4 4h4" />
                             </svg>
                           ) : (
-                            <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                           )}
                         </span>
-                        <div>
-                          <div className="font-casual text-sm font-semibold truncate max-w-[180px]">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-casual text-xs font-bold text-black dark:text-white truncate">
                             {res.file_name}
                           </div>
-                          <div className="text-xs text-zinc-400 capitalize mt-0.5">
-                            Type: {res.file_type}
+                          <div className="text-[10px] font-mono text-zinc-500 uppercase mt-0.5">
+                            {res.file_type || "DOCUMENT"}
                           </div>
                         </div>
                       </div>
@@ -267,8 +279,8 @@ export default function StudentCoursesPage() {
               )}
             </div>
           ) : (
-            <div className="sketch-card p-6 bg-zinc-50 dark:bg-zinc-900/40 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg text-center py-24 font-casual text-sm text-zinc-400">
-              Select a course to view its slides and study materials.
+            <div className="text-center py-20 font-casual text-xs text-zinc-400 italic">
+              Select a class on the left to inspect its slides.
             </div>
           )}
         </div>

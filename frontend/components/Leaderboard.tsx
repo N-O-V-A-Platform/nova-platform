@@ -52,14 +52,14 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="sketch-card p-8 bg-white dark:bg-[var(--canvas-card)] border-2 border-black dark:border-zinc-800 rounded-lg">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8 border-b-2 border-dashed border-zinc-200 dark:border-zinc-800 pb-6">
+    <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)] border-2 border-black dark:border-zinc-800 rounded-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b-2 border-dashed border-zinc-200 dark:border-zinc-800 pb-4">
         <div>
-          <h3 className="text-3xl font-bold font-handwriting text-zinc-900 dark:text-zinc-100">
-            Class Leaderboard
+          <h3 className="text-2xl font-bold font-handwriting text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <span>🏆 Top 5 Student Rankings</span>
           </h3>
-          <p className="text-sm font-casual text-zinc-500 dark:text-zinc-400 mt-2">
-            Top performers ranked by total verification XP and completed badges.
+          <p className="text-xs font-casual text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Top performers ranked by AI Teacher Studio XP and adaptive lesson milestones.
           </p>
         </div>
         
@@ -70,43 +70,43 @@ export default function Leaderboard() {
             placeholder="Search classmate..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="sketch-input py-2 px-4 text-sm w-full sm:w-56 font-casual"
+            className="sketch-input py-1.5 px-3 text-xs w-full sm:w-48 font-casual"
           />
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-16">
-          <div className="animate-spin inline-block w-8 h-8 border-4 border-[#E75A3D] border-t-transparent rounded-full mb-4"></div>
-          <p className="font-handwriting text-xl text-zinc-500">Grading achievements...</p>
+        <div className="text-center py-10">
+          <div className="animate-spin inline-block w-6 h-6 border-3 border-[#E75A3D] border-t-transparent rounded-full mb-2"></div>
+          <p className="font-handwriting text-base text-zinc-500">Grading achievements...</p>
         </div>
       ) : error ? (
-        <div className="text-center py-12">
-          <p className="text-base font-casual text-red-650 mb-4">{error}</p>
+        <div className="text-center py-8">
+          <p className="text-sm font-casual text-red-650 mb-3">{error}</p>
           <button
             onClick={fetchLeaderboard}
-            className="sketch-btn-secondary px-6 py-2 text-sm font-handwriting"
+            className="sketch-btn-secondary px-4 py-1.5 text-xs font-handwriting"
           >
             Try Again
           </button>
         </div>
       ) : filteredEntries.length === 0 ? (
-        <div className="text-center py-16 font-casual text-zinc-400 text-base">
+        <div className="text-center py-10 font-casual text-zinc-400 text-sm">
           No students found matching "{searchQuery}".
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b-2 border-black dark:border-zinc-700 font-handwriting text-left text-lg text-zinc-700 dark:text-zinc-300">
-                <th className="py-3 px-4 w-24 text-center">Rank</th>
-                <th className="py-3 px-4">Student Name</th>
-                <th className="py-3 px-4 text-center">Badges</th>
-                <th className="py-3 px-4 text-right">Total XP</th>
+              <tr className="border-b-2 border-black dark:border-zinc-700 font-handwriting text-left text-base text-zinc-700 dark:text-zinc-300">
+                <th className="py-2 px-3 w-20 text-center">Rank</th>
+                <th className="py-2 px-3">Student Name</th>
+                <th className="py-2 px-3 text-center">Badges</th>
+                <th className="py-2 px-3 text-right">Total XP</th>
               </tr>
             </thead>
-            <tbody className="font-casual text-base divide-y divide-zinc-200 dark:divide-zinc-800">
-              {filteredEntries.map((entry) => {
+            <tbody className="font-casual text-sm divide-y divide-zinc-200 dark:divide-zinc-800">
+              {filteredEntries.slice(0, 5).map((entry) => {
                 const isCurrentUser = user && user.id === entry.user_id;
                 return (
                   <tr
@@ -117,30 +117,30 @@ export default function Leaderboard() {
                         : "hover:bg-zinc-50 dark:hover:bg-zinc-800/10"
                     }`}
                   >
-                    <td className="py-4 px-4 text-center font-bold font-handwriting text-xl text-[#E75A3D]">
+                    <td className="py-2.5 px-3 text-center font-bold font-handwriting text-lg text-[#E75A3D]">
                       {getRankSuffix(entry.rank)}
                     </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
                         <span className="text-zinc-900 dark:text-zinc-100 font-bold">
                           {entry.first_name} {entry.last_name}
                         </span>
                         {isCurrentUser && (
-                          <span className="bg-[#E75A3D] text-white text-[10px] font-bold px-2 py-0.5 rounded border border-black uppercase font-handwriting tracking-wide">
+                          <span className="bg-[#E75A3D] text-white text-[9px] font-bold px-1.5 py-0.2 rounded border border-black uppercase font-handwriting tracking-wide">
                             You
                           </span>
                         )}
                       </div>
-                      <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 block sm:inline sm:ml-3">
+                      <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 block sm:inline sm:ml-2">
                         {entry.email}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className="inline-flex items-center justify-center bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 text-orange-700 dark:text-orange-400 text-sm px-3 py-1 rounded-full font-bold">
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="inline-flex items-center justify-center bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 text-orange-700 dark:text-orange-400 text-xs px-2.5 py-0.5 rounded-full font-bold">
                         {entry.badges_count} Badges
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-right font-handwriting text-xl font-bold text-zinc-700 dark:text-zinc-200">
+                    <td className="py-2.5 px-3 text-right font-handwriting text-lg font-bold text-zinc-700 dark:text-zinc-200">
                       {entry.xp} XP
                     </td>
                   </tr>
