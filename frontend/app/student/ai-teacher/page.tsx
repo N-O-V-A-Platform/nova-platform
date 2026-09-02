@@ -438,8 +438,11 @@ export default function AITeacherStudio() {
 
               {/* Status Badge */}
               <div className="mt-4 flex items-center gap-2 font-casual">
-                <span className={`text-xs px-3 py-1 rounded-full font-mono font-bold ${isPlayingAudio ? "bg-[#E75A3D] text-white border border-black" : "bg-[#FEF08A] text-black border border-black"}`}>
-                  {isPlayingAudio ? "🎙️ Speaking Lesson Script..." : "READY & LISTENING"}
+                <span className={`text-xs px-3 py-1 rounded-full font-mono font-bold flex items-center gap-1.5 ${isPlayingAudio ? "bg-[#E75A3D] text-white border border-black" : "bg-[#FEF08A] text-black border border-black"}`}>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                  <span>{isPlayingAudio ? "Speaking Lesson Script..." : "READY & LISTENING"}</span>
                 </span>
               </div>
             </div>
@@ -461,7 +464,14 @@ export default function AITeacherStudio() {
                     }`}
                     title={isMuted ? "Unmute Voice" : "Mute Voice"}
                   >
-                    <span>{isMuted ? "🔇 Muted" : "🔊 Audio On"}</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      {isMuted ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      )}
+                    </svg>
+                    <span>{isMuted ? "Muted" : "Audio On"}</span>
                   </button>
 
                   {/* Speed Selector */}
@@ -657,8 +667,20 @@ export default function AITeacherStudio() {
                       : "bg-[#FEF08A]/40 dark:bg-zinc-950/40 text-black dark:text-zinc-200"
                   }`}>
                     <div className="flex items-start gap-3">
-                      <div className="text-xl">
-                        {lastEvaluation.misconception_detected ? "💡" : lastEvaluation.is_correct ? "🎉" : "🤔"}
+                      <div className="text-xl pt-0.5">
+                        {lastEvaluation.misconception_detected ? (
+                          <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                        ) : lastEvaluation.is_correct ? (
+                          <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">

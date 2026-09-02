@@ -56,13 +56,13 @@ export default function Leaderboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b-2 border-dashed border-zinc-200 dark:border-zinc-800 pb-4">
         <div>
           <h3 className="text-2xl font-bold font-handwriting text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <span>🏆 Top 5 Student Rankings</span>
+            <span> Top 5 Student Rankings</span>
           </h3>
           <p className="text-xs font-casual text-zinc-500 dark:text-zinc-400 mt-0.5">
             Top performers ranked by AI Teacher Studio XP and adaptive lesson milestones.
           </p>
         </div>
-        
+
         {/* Search input */}
         <div className="relative">
           <input
@@ -111,11 +111,10 @@ export default function Leaderboard() {
                 return (
                   <tr
                     key={entry.user_id}
-                    className={`transition-colors ${
-                      isCurrentUser
+                    className={`transition-colors ${isCurrentUser
                         ? "bg-yellow-50 dark:bg-yellow-950/20 font-semibold"
                         : "hover:bg-zinc-50 dark:hover:bg-zinc-800/10"
-                    }`}
+                      }`}
                   >
                     <td className="py-2.5 px-3 text-center font-bold font-handwriting text-lg text-[#E75A3D]">
                       {getRankSuffix(entry.rank)}

@@ -315,7 +315,12 @@ function FloatingAITeacherWidget() {
 
           {response && (
             <div className="bg-[#FEF08A]/30 dark:bg-zinc-950 border-2 border-black rounded-xl p-3 text-xs text-zinc-800 dark:text-zinc-200 max-h-48 overflow-y-auto leading-relaxed shadow-inner font-casual">
-              <span className="text-[#E75A3D] font-bold block mb-1 font-handwriting text-sm">💡 Teacher Explanation:</span>
+              <span className="text-[#E75A3D] font-bold mb-1 font-handwriting text-sm flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-[#E75A3D]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-4a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span>Teacher Explanation:</span>
+              </span>
               <p>{response}</p>
             </div>
           )}
