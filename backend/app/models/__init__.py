@@ -1,4 +1,5 @@
 from app.models.ai import AIConversation, Escalation, Question
+from app.models.ai_teacher import LearningSession, LessonPlan, LessonSection, TeachingInteraction, Misconception
 from app.models.analytics import AuditLog
 from app.models.course import Course, Enrollment
 from app.models.institution import Department, Institution
@@ -22,7 +23,11 @@ __all__ = [
     "Escalation",
     "Institution",
     "KnowledgeBase",
+    "LearningSession",
     "Lecture",
+    "LessonPlan",
+    "LessonSection",
+    "Misconception",
     "Notification",
     "Permission",
     "Portfolio",
@@ -34,6 +39,7 @@ __all__ = [
     "Role",
     "ScrapedSource",
     "SkillPassport",
+    "TeachingInteraction",
     "User",
     "Workflow",
 ]
