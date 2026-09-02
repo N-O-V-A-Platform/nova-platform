@@ -63,4 +63,4 @@ postgres_data/
 
 # N.O.V.A Uploads
 backend/static/uploads/*
-!backend/static/uploads/.gitkeep
+!backend/static/uploads/.gitkeepbackend/nova.db

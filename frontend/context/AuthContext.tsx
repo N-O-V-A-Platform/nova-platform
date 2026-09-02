@@ -22,35 +22,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light">("light");
   const router = useRouter();
 
-  // Load theme preference on mount
+  // Force Light (Whiteboard) theme per requirement
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("nova_theme") as "light" | "dark";
-      // Force default to light theme (Whiteboard) per requirement
-      const initialTheme = savedTheme || "light";
-      
-      setTheme(initialTheme);
-      if (initialTheme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+      localStorage.removeItem("nova_theme");
+      document.documentElement.classList.remove("dark");
     }
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
     if (typeof window !== "undefined") {
-      localStorage.setItem("nova_theme", nextTheme);
-      if (nextTheme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+      localStorage.removeItem("nova_theme");
+      document.documentElement.classList.remove("dark");
     }
   };
 

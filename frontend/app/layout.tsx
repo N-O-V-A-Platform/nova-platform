@@ -25,9 +25,9 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "N.O.V.A. - Next-gen Optimized Virtual Assistant",
-  description: "Transforming classrooms into intelligent, interactive learning environments powered by UiPath RPA and AI.",
-  keywords: ["UiPath", "RPA", "education", "AI tutor", "learning platform", "automation"],
+  title: "N.O.V.A. - Next-gen AI Educator & Adaptive Learning Studio",
+  description: "Transforming classrooms into intelligent, interactive learning environments with personalized AI Teachers, dynamic visual canvases, and real-time misconception detection.",
+  keywords: ["AI Teacher", "Adaptive Learning", "Pedagogical RAG", "Education AI", "Misconception Engine", "N.O.V.A"],
 };
 
 export default function RootLayout({

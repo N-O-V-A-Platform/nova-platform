@@ -64,13 +64,24 @@ async def upload_resource(
 
     # Ensure uploads directory exists
     upload_dir = "static/uploads"
-    os.makedirs(upload_dir, exist_ok=True)
+    try:
+        os.makedirs(upload_dir, exist_ok=True)
+    except PermissionError:
+        upload_dir = "/tmp/uploads"
+        os.makedirs(upload_dir, exist_ok=True)
 
     # Save file locally with a unique name to prevent collisions
     unique_filename = f"{uuid.uuid4().hex}_{file_name}"
     file_path = os.path.join(upload_dir, unique_filename)
-    with open(file_path, "wb") as buffer:
-        buffer.write(content)
+    try:
+        with open(file_path, "wb") as buffer:
+            buffer.write(content)
+    except PermissionError:
+        upload_dir = "/tmp/uploads"
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, unique_filename)
+        with open(file_path, "wb") as buffer:
+            buffer.write(content)
 
     # We store a relative URL so it's host-agnostic
     storage_url = f"/static/uploads/{unique_filename}"
