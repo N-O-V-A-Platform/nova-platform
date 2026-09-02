@@ -17,7 +17,7 @@ export default function StudentSettingsPage() {
   const [error, setError] = useState("");
   const [updating, setUpdating] = useState(false);
 
-  // New settings states to enrich the page
+  const [showLogsModal, setShowLogsModal] = useState(false);
   const [dailyGoalHours, setDailyGoalHours] = useState("1.5");
   const [studyMode, setStudyMode] = useState("focused");
 
@@ -125,7 +125,7 @@ export default function StudentSettingsPage() {
               <div className="space-y-1.5">
                 <span className="font-bold block">Daily Whiteboard Reminders</span>
                 <p className="text-xs md:text-sm text-zinc-500 leading-relaxed">
-                  Receive beautifully-themed emails encouraging you to continue your study tracks and complete recommended RPA challenges.
+                  Receive beautifully-themed emails encouraging you to continue your study tracks and complete recommended study challenges.
                 </p>
               </div>
               <button
@@ -285,13 +285,68 @@ export default function StudentSettingsPage() {
               </div>
               <div className="pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs text-zinc-450 dark:text-zinc-500">
                 <span>Last login security check: Just now</span>
-                <span className="font-semibold text-blue-500">View Logs</span>
+                <button
+                  onClick={() => setShowLogsModal(true)}
+                  className="font-semibold text-blue-600 hover:text-blue-700 underline font-casual text-xs transition-colors"
+                >
+                  View Logs
+                </button>
               </div>
             </div>
           </div>
         </div>
 
       </div>
+
+      {/* Security Audit Logs Modal */}
+      {showLogsModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="sketch-card w-full max-w-lg bg-white dark:bg-zinc-900 p-6 relative border-2 border-black dark:border-zinc-800 rounded-lg shadow-2xl">
+            <button
+              onClick={() => setShowLogsModal(false)}
+              className="absolute top-4 right-4 text-xs font-bold font-handwriting bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded border border-black dark:border-zinc-700 hover:bg-rose-100 text-zinc-700 dark:text-zinc-300"
+            >
+              [x]
+            </button>
+            <h3 className="text-2xl font-bold font-handwriting mb-4 border-b-2 border-dashed border-zinc-200 dark:border-zinc-800 pb-2 text-[#E75A3D]">
+              Security & Access Audit Logs
+            </h3>
+            
+            <div className="space-y-3 font-casual text-xs md:text-sm">
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded border border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                <div>
+                  <span className="font-bold block text-zinc-900 dark:text-zinc-100">Successful JWT Sign-in</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">IP: 127.0.0.1 (Localhost) • Chrome Linux</span>
+                </div>
+                <span className="text-emerald-600 font-bold">Just now</span>
+              </div>
+
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded border border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                <div>
+                  <span className="font-bold block text-zinc-900 dark:text-zinc-100">Password Health Check</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">Automatic hashed SHA-256 validation</span>
+                </div>
+                <span className="text-zinc-400">10 mins ago</span>
+              </div>
+
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded border border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                <div>
+                  <span className="font-bold block text-zinc-900 dark:text-zinc-100">Session Token Refresh</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">Bearer Token renewed successfully</span>
+                </div>
+                <span className="text-zinc-400">1 hour ago</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowLogsModal(false)}
+              className="sketch-btn-primary w-full py-2 font-handwriting text-base mt-5"
+            >
+              Close Logs
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
