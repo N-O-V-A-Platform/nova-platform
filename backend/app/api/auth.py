@@ -404,10 +404,12 @@ async def google_auth(payload: GoogleAuthRequest, db: AsyncSession = Depends(get
 
     try:
         id_info = await run_in_threadpool(_verify_google_id_token, payload.id_token)
-    except (ValueError, GoogleAuthError):
+    except (ValueError, GoogleAuthError) as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Google ID token",
+            detail=f"Invalid Google ID token: {str(e)}",
         )
 
     email = str(id_info.get("email") or "").strip().lower()
