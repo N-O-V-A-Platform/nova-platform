@@ -13,7 +13,6 @@ export default function StudentDashboardOverview() {
 
   const [showStickyNote, setShowStickyNote] = useState(true);
   const [announcements, setAnnouncements] = useState<string[]>([]);
-  const [uipathJourney, setUipathJourney] = useState<any>(null);
   const [studyTip, setStudyTip] = useState("");
   const [realRank, setRealRank] = useState<string>("Loading...");
   const [realXp, setRealXp] = useState<number>(0);
@@ -93,13 +92,9 @@ export default function StudentDashboardOverview() {
     }
   };
 
-  // Fetch UiPath Academy Study Journey details
-  const fetchUiPathData = async () => {
+  // Fetch real rank & XP from leaderboard
+  const fetchLeaderboardData = async () => {
     try {
-      const journeyData = await authService.getUiPathJourney();
-      setUipathJourney(journeyData);
-
-      // Fetch real rank & XP from leaderboard
       const lb = await authService.getLeaderboard();
       const me = lb.find(x => x.user_id === user?.id);
       if (me) {
@@ -110,7 +105,7 @@ export default function StudentDashboardOverview() {
         setRealXp(0);
       }
     } catch (err) {
-      console.error("Failed to load UiPath/Leaderboard data:", err);
+      console.error("Failed to load Leaderboard data:", err);
       setRealRank("Unranked");
       setRealXp(0);
     }
@@ -130,7 +125,7 @@ export default function StudentDashboardOverview() {
   useEffect(() => {
     if (user) {
       fetchAnnouncements();
-      fetchUiPathData();
+      fetchLeaderboardData();
       fetchStudyTip();
     }
   }, [user]);
@@ -216,28 +211,6 @@ export default function StudentDashboardOverview() {
           {/* Leaderboard Card */}
           <Leaderboard />
 
-          {/* Next Study Action Banner */}
-          {uipathJourney?.recommended_course && (
-            <div className="sketch-card p-5 bg-amber-50 dark:bg-zinc-900 border-2 border-yellow-500 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="space-y-1">
-                <span className="text-xs uppercase font-bold text-yellow-600 dark:text-yellow-400 font-casual tracking-wider">
-                  Recommended Track
-                </span>
-                <h4 className="text-xl font-bold font-handwriting leading-tight">
-                  {uipathJourney.recommended_course.title}
-                </h4>
-                <p className="text-sm font-casual text-zinc-500 dark:text-zinc-400">
-                  Earn {uipathJourney.recommended_course.xp} XP and a custom badge on completion.
-                </p>
-              </div>
-              <Link
-                href="/student/uipath"
-                className="sketch-btn-primary py-2 px-5 font-handwriting text-base whitespace-nowrap shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-              >
-                Go to Learning Path
-              </Link>
-            </div>
-          )}
         </div>
 
         {/* Right column: Notepad & Sticky Note */}

@@ -26,13 +26,13 @@ async def init_db(db: AsyncSession) -> None:
         role_map[role_name] = role
 
     # 2. Seed default Institution
-    inst_result = await db.execute(select(Institution).where(Institution.code == "UIPATH-ACAD"))
+    inst_result = await db.execute(select(Institution).where(Institution.code == "NOVA-ACAD"))
     institution = inst_result.scalars().first()
     if not institution:
         institution = Institution(
-            name="UiPath Academy",
-            code="UIPATH-ACAD",
-            email="info@academy.uipath.com",
+            name="N.O.V.A Academy of AI",
+            code="NOVA-ACAD",
+            email="info@nova.edu",
             country="India",
             is_active=True
         )
@@ -41,25 +41,25 @@ async def init_db(db: AsyncSession) -> None:
         await db.refresh(institution)
 
     # 3. Seed default Department
-    dept_result = await db.execute(select(Department).where(Department.code == "RPA-IA"))
+    dept_result = await db.execute(select(Department).where(Department.code == "CS-AI"))
     department = dept_result.scalars().first()
     if not department:
         department = Department(
             institution_id=institution.id,
-            name="RPA & Intelligent Automation",
-            code="RPA-IA"
+            name="Computer Science & AI Engineering",
+            code="CS-AI"
         )
         db.add(department)
         await db.commit()
         await db.refresh(department)
 
     # 4. Seed default Lecturer
-    lect_result = await db.execute(select(User).where(User.email == "uipath.lecturer@nova.edu"))
+    lect_result = await db.execute(select(User).where(User.email == "lecturer@nova.edu"))
     lecturer = lect_result.scalars().first()
     if not lecturer:
         lecturer = User(
-            email="uipath.lecturer@nova.edu",
-            first_name="UiPath",
+            email="lecturer@nova.edu",
+            first_name="AI",
             last_name="Instructor",
             password_hash=get_password_hash(os.getenv("SEED_LECTURER_PASSWORD", uuid.uuid4().hex)),
             role_id=role_map["Lecturer"].id,
@@ -71,15 +71,15 @@ async def init_db(db: AsyncSession) -> None:
         await db.commit()
         await db.refresh(lecturer)
 
-    # 5. Seed 10 UiPath courses
-    # Import the updated courses with their direct UUID mappings
+    # 5. Seed 10 CS & AI courses
     from app.api.uipath import UIPATH_COURSES
     for c in UIPATH_COURSES:
-        course_result = await db.execute(select(Course).where(Course.code == c["code"]))
+        course_id = uuid.UUID(c["id"])
+        course_result = await db.execute(select(Course).where(Course.id == course_id))
         course = course_result.scalars().first()
         if not course:
             course = Course(
-                id=uuid.UUID(c["id"]),
+                id=course_id,
                 department_id=department.id,
                 lecturer_id=lecturer.id,
                 title=c["title"],
@@ -87,6 +87,11 @@ async def init_db(db: AsyncSession) -> None:
                 semester=1 if c["difficulty"] == "Beginner" else 2 if c["difficulty"] == "Intermediate" else 3,
                 credits=3 if c["difficulty"] == "Beginner" else 4
             )
+            db.add(course)
+        else:
+            # Update existing title and code in database
+            course.title = c["title"]
+            course.code = c["code"]
             db.add(course)
             
     await db.commit()
@@ -100,18 +105,18 @@ async def init_db(db: AsyncSession) -> None:
             res_result = await db.execute(select(Resource).where(Resource.course_id == course.id))
             if not res_result.scalars().first():
                 url_map = {
-                    "UI-RPA-1": ("RPA_Starter_Introduction_Guide.pdf", "https://docs.uipath.com/hub/docs/rpa-starter"),
-                    "UI-STU-2": ("UiPath_Studio_Beginners_Guide.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/studio-introduction"),
-                    "UI-VAR-3": ("Studio_Variables_and_Arguments.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/managing-variables"),
-                    "UI-DAT-4": ("Studio_Data_Manipulation_Guide.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/data-manipulation"),
-                    "UI-XLS-5": ("Studio_Excel_Automation_Guide.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/excel-activities"),
-                    "UI-UIA-6": ("Studio_UI_Automation_Selectors.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/ui-automation-activities"),
-                    "UI-EML-7": ("Studio_Mail_Automation_Guide.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/mail-activities"),
-                    "UI-PDF-8": ("Studio_PDF_Automation_Guide.pdf", "https://docs.uipath.com/activities/other/latest/user-guide/pdf-activities"),
-                    "UI-ORG-9": ("Studio_Project_Organization_Architecture.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-automation-projects"),
-                    "UI-ERR-10": ("Studio_Error_Handling_Guide.pdf", "https://docs.uipath.com/studio/standalone/2023.10/user-guide/about-exception-handling"),
+                    "CS-AI-1": ("AI_Starter_Introduction_Guide.pdf", "/resources/docs/ai-starter"),
+                    "CS-ML-2": ("Machine_Learning_Beginners_Guide.pdf", "/resources/docs/ml-guide"),
+                    "CS-ALG-3": ("Algorithms_Control_Flow_Guide.pdf", "/resources/docs/algorithms"),
+                    "CS-DAT-4": ("Data_Structures_Database_Systems.pdf", "/resources/docs/databases"),
+                    "CS-PY-5": ("Python_Programming_Analytics_Guide.pdf", "/resources/docs/python"),
+                    "CS-WEB-6": ("Web_Development_Frontend_Guide.pdf", "/resources/docs/web-dev"),
+                    "CS-NLP-7": ("Natural_Language_Processing_LLMs.pdf", "/resources/docs/nlp-llms"),
+                    "CS-CV-8": ("Computer_Vision_Visual_Intelligence.pdf", "/resources/docs/computer-vision"),
+                    "CS-SYS-9": ("Software_Architecture_System_Design.pdf", "/resources/docs/system-design"),
+                    "CS-ERR-10": ("Debugging_Exception_Handling_Guide.pdf", "/resources/docs/debugging"),
                 }
-                file_info = url_map.get(c["code"], ("UiPath_Course_Documentation.pdf", "https://docs.uipath.com"))
+                file_info = url_map.get(c["code"], ("Course_Documentation.pdf", "/resources/docs"))
                 new_resource = Resource(
                     course_id=course.id,
                     file_name=file_info[0],

@@ -48,9 +48,9 @@ export default function LecturerMaterials() {
         last_run: new Date().toISOString()
       });
       setSources([
-        { id: "1", url: "https://docs.uipath.com/studio/standalone/2023.10/user-guide/introduction", title: "UiPath Studio - Introduction", namespace: "uipath_global", chunk_count: 42, status: "success", last_scraped_at: new Date().toISOString() },
-        { id: "2", url: "https://docs.uipath.com/orchestrator/automation-cloud/latest/user-guide/about-queues-and-transactions", title: "Queues and Transactions", namespace: "uipath_global", chunk_count: 120, status: "success", last_scraped_at: new Date().toISOString() },
-        { id: "3", url: "https://community.uipath.com/c/studio/8", title: "UiPath Community - Studio Q&A (Outdated URL)", namespace: "uipath_global", chunk_count: 0, status: "error", error_message: "HTTP Error 404: Not Found", last_scraped_at: new Date().toISOString() }
+        { id: "1", url: "https://docs.nova.edu/ai/introduction", title: "Artificial Intelligence - Introduction", namespace: "global_docs", chunk_count: 42, status: "success", last_scraped_at: new Date().toISOString() },
+        { id: "2", url: "https://docs.nova.edu/ml/models", title: "Machine Learning Models & Data Pipelines", namespace: "global_docs", chunk_count: 120, status: "success", last_scraped_at: new Date().toISOString() },
+        { id: "3", url: "https://docs.nova.edu/nlp/llms", title: "Natural Language Processing Overview", namespace: "global_docs", chunk_count: 85, status: "success", last_scraped_at: new Date().toISOString() }
       ]);
     }
   };
@@ -175,7 +175,7 @@ export default function LecturerMaterials() {
               AI Knowledge Base & Materials
             </h2>
             <p className="font-casual text-gray-500 mt-1">
-              Configure and monitor the background scraper that indexes official UiPath concepts.
+              Configure and monitor the background scraper that indexes course concepts.
             </p>
           </div>
 
@@ -225,7 +225,7 @@ export default function LecturerMaterials() {
               {scrapeStatus.total_chunks}
             </div>
             <p className="text-xs font-casual text-gray-450 mt-2">
-              Stored in Pinecone (uipath_global namespace)
+              Stored in Pinecone (global_docs namespace)
             </p>
           </div>
 
@@ -251,7 +251,7 @@ export default function LecturerMaterials() {
         {/* Scraped Sources Table */}
         <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)]">
           <h3 className="text-2xl font-bold font-handwriting mb-4">
-            Indexed UiPath Knowledge Sources
+            Indexed Course Knowledge Sources
           </h3>
 
           <div className="overflow-x-auto">

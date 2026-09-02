@@ -57,10 +57,10 @@ export default function StudentCertificatesPage() {
     <div className="space-y-8">
       <div>
         <h2 className="text-3xl md:text-4xl font-bold font-handwriting text-[#E75A3D]">
-          UiPath Badges & Certificates
+          Badges & Certificates
         </h2>
         <p className="font-casual text-base text-zinc-500 dark:text-zinc-400 mt-1.5">
-          Submit and manage your official UiPath Academy credentials to gain XP rewards.
+          Submit and manage your official course completion credentials to gain XP rewards.
         </p>
       </div>
 
@@ -164,7 +164,7 @@ export default function StudentCertificatesPage() {
                         {course.title}
                       </h4>
                       <p className="text-xs font-casual text-zinc-450 dark:text-zinc-500 mt-1.5 line-clamp-2 leading-relaxed">
-                        {course.description || "Official UiPath Academy learning path course."}
+                        {course.description || "Official platform learning path course."}
                       </p>
                     </div>
                     <div className="mt-5 pt-3.5 border-t border-dashed border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
