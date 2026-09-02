@@ -42,34 +42,39 @@ async def lifespan(app: FastAPI):
         print(f"[NOVA] Warning: Redis memory service pre-initialization failed: {e}")
 
     # Initialize APScheduler for weekly scrape tasks
-    from apscheduler.schedulers.background import BackgroundScheduler
-    scheduler = BackgroundScheduler()
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        scheduler = BackgroundScheduler()
 
-    def weekly_scrape_job():
-        import asyncio
-        from app.workers.scraper import scrape_worker
-        from app.db.session import AsyncSessionLocal
-        
-        async def _run():
-            async with AsyncSessionLocal() as session:
-                await scrape_worker.run_full_scrape(session)
-                
-        new_loop = asyncio.new_event_loop()
-        try:
-            new_loop.run_until_complete(_run())
-        finally:
-            new_loop.close()
+        def weekly_scrape_job():
+            import asyncio
+            from app.workers.scraper import scrape_worker
+            from app.db.session import AsyncSessionLocal
+            
+            async def _run():
+                async with AsyncSessionLocal() as session:
+                    await scrape_worker.run_full_scrape(session)
+                    
+            new_loop = asyncio.new_event_loop()
+            try:
+                new_loop.run_until_complete(_run())
+            finally:
+                new_loop.close()
 
-    # Schedule for Sunday at 2:00 AM
-    scheduler.add_job(weekly_scrape_job, "cron", day_of_week="sun", hour=2, minute=0)
-    scheduler.start()
-    print("[NOVA] Weekly UiPath documentation scraper schedule started.")
+        # Schedule for Sunday at 2:00 AM
+        scheduler.add_job(weekly_scrape_job, "cron", day_of_week="sun", hour=2, minute=0)
+        scheduler.start()
+        print("[NOVA] Weekly UiPath documentation scraper schedule started.")
+    except Exception as e:
+        print(f"[NOVA] Warning: APScheduler background worker initialization skipped: {e}")
+        scheduler = None
 
     yield
     
     # Shutdown scheduler on app shutdown
-    scheduler.shutdown()
-    print("[NOVA] Scheduler stopped.")
+    if scheduler:
+        scheduler.shutdown()
+        print("[NOVA] Scheduler stopped.")
 
 
 app = FastAPI(

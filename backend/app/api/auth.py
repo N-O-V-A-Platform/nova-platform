@@ -1,3 +1,4 @@
+import os
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
@@ -65,8 +66,10 @@ def _google_profile_names(id_info: dict, email: str) -> tuple[str, str]:
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+    email_clean = user_in.email.strip().lower()
+
     # Check if user already exists
-    result = await db.execute(select(User).where(User.email == user_in.email))
+    result = await db.execute(select(User).where(User.email == email_clean))
     if result.scalars().first():
         raise HTTPException(
             status_code=400,
@@ -79,7 +82,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     status_str = "Active"
     is_superuser = False
     
-    if _is_admin_email(user_in.email):
+    if _is_admin_email(email_clean):
         role_name = "Admin"
         is_superuser = True
     elif role_name == "Lecturer":
@@ -105,13 +108,16 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 
     # Create user
     hashed_password = get_password_hash(user_in.password)
-    is_admin = _is_admin_email(user_in.email)
-    is_email_verified = is_admin
+    is_admin = _is_admin_email(email_clean)
+    
+    # By default in dev mode (or for students), auto-verify email so registration works seamlessly
+    require_verification = os.getenv("REQUIRE_EMAIL_VERIFICATION", "0") == "1"
+    is_email_verified = is_admin or (not require_verification and role_name == "Student")
 
     user = User(
-        email=user_in.email,
-        first_name=user_in.first_name,
-        last_name=user_in.last_name,
+        email=email_clean,
+        first_name=user_in.first_name.strip(),
+        last_name=user_in.last_name.strip(),
         password_hash=hashed_password,
         role=role,
         institution=institution,
@@ -170,9 +176,20 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         )
 
     if not is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Lecturer account created! A verification request has been sent to the admin. You can log in once approved."
+        return Token(
+            access_token="",
+            refresh_token="",
+            user=UserResponse(
+                id=user.id,
+                email=user.email,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                role_name=role_name,
+                institution_id=user.institution_id,
+                is_email_verified=True,
+                is_onboarded=user.is_onboarded,
+                status="Pending Approval"
+            )
         )
 
     # Generate tokens
@@ -207,10 +224,12 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+    email_clean = credentials.email.strip().lower()
+
     # Fetch user
     result = await db.execute(
         select(User)
-        .where(User.email == credentials.email)
+        .where(User.email == email_clean)
         .options(selectinload(User.role))
     )
     user = result.scalars().first()
