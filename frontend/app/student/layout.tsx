@@ -273,7 +273,7 @@ function FloatingAITeacherWidget() {
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-gradient-to-r from-indigo-600 to-[#E75A3D] text-white p-3.5 rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold text-xs"
+          className="bg-[#E75A3D] hover:bg-[#d44c30] text-white p-3.5 rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 font-bold font-handwriting text-sm"
           title="Instant AI Educator Assistant (Alt + T)"
         >
           <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
@@ -288,18 +288,18 @@ function FloatingAITeacherWidget() {
 
       {/* Floating Educator Popover Drawer */}
       {isOpen && (
-        <div className="fixed bottom-20 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] bg-zinc-900 border-2 border-indigo-500/60 rounded-2xl p-5 shadow-2xl space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-200">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div className="fixed bottom-20 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] bg-white dark:bg-zinc-900 border-2 border-black rounded-2xl p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="flex items-center justify-between border-b-2 border-zinc-200 dark:border-zinc-800 pb-3">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
-              <h4 className="font-bold text-sm text-white">Dr. Nova — Instant Educator</h4>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#E75A3D] animate-pulse" />
+              <h4 className="font-bold text-sm font-handwriting text-black dark:text-white">Dr. Nova — Instant Educator</h4>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-zinc-400 hover:text-white text-sm">
+            <button onClick={() => setIsOpen(false)} className="text-zinc-500 hover:text-black dark:hover:text-white text-sm font-bold">
               ✕
             </button>
           </div>
 
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs font-casual text-zinc-600 dark:text-zinc-400">
             Stuck on something on this page? Ask a quick doubt or jump to the studio session.
           </p>
 
@@ -309,21 +309,21 @@ function FloatingAITeacherWidget() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="e.g. Why does current decrease when resistance increases?"
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border-2 border-black rounded-xl p-3 text-xs text-black dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#E75A3D] font-casual"
             />
 
             <div className="flex items-center justify-between">
               <Link
                 href="/student/ai-teacher"
                 onClick={() => setIsOpen(false)}
-                className="text-xs text-indigo-400 hover:underline font-semibold"
+                className="text-xs text-[#E75A3D] hover:underline font-bold font-casual"
               >
                 Open Studio Workspace ➔
               </Link>
               <button
                 type="submit"
                 disabled={loading || !query.trim()}
-                className="bg-[#E75A3D] text-white font-bold text-xs px-4 py-2 rounded-lg border border-black shadow"
+                className="bg-[#E75A3D] hover:bg-[#d44c30] text-white font-handwriting font-bold text-sm px-4 py-2 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50"
               >
                 {loading ? "Explaining..." : "Explain Doubt"}
               </button>
@@ -331,8 +331,8 @@ function FloatingAITeacherWidget() {
           </form>
 
           {response && (
-            <div className="bg-zinc-950 border border-indigo-500/30 rounded-xl p-3 text-xs text-zinc-300 max-h-48 overflow-y-auto leading-relaxed shadow-inner">
-              <span className="text-indigo-400 font-bold block mb-1">💡 Teacher Explanation:</span>
+            <div className="bg-[#FEF08A]/30 dark:bg-zinc-950 border-2 border-black rounded-xl p-3 text-xs text-zinc-800 dark:text-zinc-200 max-h-48 overflow-y-auto leading-relaxed shadow-inner font-casual">
+              <span className="text-[#E75A3D] font-bold block mb-1 font-handwriting text-sm">💡 Teacher Explanation:</span>
               <p>{response}</p>
             </div>
           )}

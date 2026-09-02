@@ -168,7 +168,7 @@ export default function StudentCoursesPage() {
           {/* Browse Available Courses */}
           <div className="sketch-card p-6 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-800 rounded-lg">
             <h3 className="text-2xl font-bold font-handwriting mb-5 border-b border-dashed border-zinc-200 dark:border-zinc-800 pb-2.5 flex items-center gap-2.5">
-              <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-[#E75A3D]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <span>Register New Courses</span>
