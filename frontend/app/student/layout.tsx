@@ -3,11 +3,22 @@
 import React, { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth";
 import Link from "next/link";
 import SplashLoader from "@/app/components/SplashLoader";
 
 interface StudentLayoutProps {
   children: React.ReactNode;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
+function getAuthHeaders(includeContentType = false): HeadersInit {
+  const token = authService.getToken();
+  return {
+    ...(includeContentType ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 }
 
 export default function StudentLayout({ children }: StudentLayoutProps) {
@@ -215,12 +226,9 @@ function FloatingAITeacherWidget() {
     setLoading(true);
     setResponse(null);
     try {
-      const res = await fetch("/api/v1/ai-teacher/sessions", {
+      const res = await fetch(`${API_BASE_URL}/ai-teacher/sessions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({
           title: `Quick Doubt: ${query.slice(0, 40)}`,
           student_level: "Class 10",
@@ -231,11 +239,9 @@ function FloatingAITeacherWidget() {
       });
       if (res.ok) {
         const sessionData = await res.json();
-        const nextRes = await fetch(`/api/v1/ai-teacher/sessions/${sessionData.id}/next`, {
+        const nextRes = await fetch(`${API_BASE_URL}/ai-teacher/sessions/${sessionData.id}/next`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`
-          }
+          headers: getAuthHeaders(),
         });
         if (nextRes.ok) {
           const stepData = await nextRes.json();

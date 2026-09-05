@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [roleName, setRoleName] = useState("Student");
+  const [roleName, setRoleName] = useState<"Student" | "Lecturer">("Student");
   const [institutionCode, setInstitutionCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await register({
+      const registration = await register({
         first_name: firstName,
         last_name: lastName,
         email,
@@ -37,7 +37,13 @@ export default function RegisterPage() {
         role_name: roleName,
         institution_code: institutionCode.trim() || null
       });
-      setSuccessMsg("Welcome to N.O.V.A.! Account created successfully.");
+      if (!registration.access_token) {
+        setSuccessMsg(
+          registration.user.status === "Pending Approval"
+            ? "Your lecturer account has been created and is awaiting administrator approval."
+            : "Account created. Please verify your email address to activate it."
+        );
+      }
     } catch (err: any) {
       setError(err.message || "Registration failed");
     } finally {
@@ -118,8 +124,9 @@ export default function RegisterPage() {
               <div className="flex flex-col">
                 <label className="text-xs font-semibold mb-0.5 font-casual">Password</label>
                 <input
-                  type="password"
-                  required
+                type="password"
+                required
+                minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="sketch-input py-1.5 px-3 text-sm border-2 border-black rounded-md outline-none focus:ring-2 focus:ring-[#E75A3D]"

@@ -2,6 +2,17 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/auth";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
+function getAuthHeaders(includeContentType = false): HeadersInit {
+  const token = authService.getToken();
+  return {
+    ...(includeContentType ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
 interface Section {
   id: string;
@@ -95,10 +106,8 @@ export default function AITeacherStudio() {
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/ai-teacher/sessions", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`
-        }
+      const res = await fetch(`${API_BASE_URL}/ai-teacher/sessions`, {
+        headers: getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -118,12 +127,9 @@ export default function AITeacherStudio() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/ai-teacher/sessions", {
+      const res = await fetch(`${API_BASE_URL}/ai-teacher/sessions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({
           title: topic,
           student_level: studentLevel,
@@ -150,10 +156,8 @@ export default function AITeacherStudio() {
   const loadSession = async (sessionId: string) => {
     setStepLoading(true);
     try {
-      const res = await fetch(`/api/v1/ai-teacher/sessions/${sessionId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`
-        }
+      const res = await fetch(`${API_BASE_URL}/ai-teacher/sessions/${sessionId}`, {
+        headers: getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -172,11 +176,9 @@ export default function AITeacherStudio() {
     setLastEvaluation(null);
     setStudentAnswer("");
     try {
-      const res = await fetch(`/api/v1/ai-teacher/sessions/${sessionId}/next`, {
+      const res = await fetch(`${API_BASE_URL}/ai-teacher/sessions/${sessionId}/next`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`
-        }
+        headers: getAuthHeaders(),
       });
       if (res.ok) {
         const step = await res.json();
@@ -202,12 +204,9 @@ export default function AITeacherStudio() {
 
     setEvaluating(true);
     try {
-      const res = await fetch(`/api/v1/ai-teacher/sessions/${activeSession.id}/respond`, {
+      const res = await fetch(`${API_BASE_URL}/ai-teacher/sessions/${activeSession.id}/respond`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({
           response_text: studentAnswer,
           voice_preset: voicePreset,
