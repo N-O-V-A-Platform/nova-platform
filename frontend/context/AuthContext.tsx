@@ -2,14 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { authService, UserResponse } from "@/services/auth";
+import { authService, RegisterRequest, TokenResponse, UserResponse } from "@/services/auth";
 
 interface AuthContextType {
   user: UserResponse | null;
   loading: boolean;
   theme: "light" | "dark";
   login: (credentials: any) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<TokenResponse>;
   googleLogin: (idToken: string) => Promise<void>;
   onboard: (data: any) => Promise<void>;
   logout: () => void;
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (data: any) => {
+  const register = async (data: RegisterRequest): Promise<TokenResponse> => {
     setLoading(true);
     try {
       const res = await authService.register(data);
@@ -99,8 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If access_token is empty, registration succeeded but email verification is required
       if (!res.access_token) {
         setLoading(false);
-        // Don't store tokens or set user — let the register page show the success message
-        return;
+        // Don't store tokens or set user — the register page will explain the next step.
+        return res;
       }
 
       setUser(res.user);
@@ -116,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         router.push("/student/dashboard");
       }
+      return res;
     } catch (err) {
       setLoading(false);
       throw err;

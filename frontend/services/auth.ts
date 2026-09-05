@@ -48,7 +48,48 @@ export interface CertificateUploadResponse {
   message?: string;
 }
 
+export interface AdminOverview {
+  users: {
+    total: number;
+    active: number;
+    students: number;
+    lecturers: number;
+    pending_lecturers: number;
+  };
+  scraper: {
+    is_running: boolean;
+    sources: number;
+    indexed_chunks: number;
+    last_run: string | null;
+  };
+  integrations: Array<{ name: string; configured: boolean }>;
+}
+
 type ApiRecord = Record<string, any>;
+
+async function getErrorMessage(response: Response, fallback: string): Promise<string> {
+  try {
+    const payload: unknown = await response.json();
+    if (!payload || typeof payload !== "object" || !("detail" in payload)) {
+      return fallback;
+    }
+
+    const detail = (payload as { detail?: unknown }).detail;
+    if (typeof detail === "string") {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const firstIssue = detail[0] as { msg?: unknown } | undefined;
+      if (typeof firstIssue?.msg === "string") {
+        return firstIssue.msg;
+      }
+    }
+  } catch {
+    // Use the safe fallback if an upstream proxy returned a non-JSON error.
+  }
+
+  return fallback;
+}
 
 export const authService = {
   setToken(token: string) {
@@ -100,8 +141,7 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.detail || "Registration failed");
+      throw new Error(await getErrorMessage(response, "Registration failed"));
     }
 
     const resData: TokenResponse = await response.json();
@@ -121,8 +161,7 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.detail || "Login failed");
+      throw new Error(await getErrorMessage(response, "Login failed"));
     }
 
     const resData: TokenResponse = await response.json();
@@ -414,6 +453,20 @@ export const authService = {
     if (!response.ok) {
       const errData = await response.json();
       throw new Error(errData.detail || "Failed to load lecturer requests");
+    }
+
+    return response.json();
+  },
+
+  async getAdminOverview(): Promise<AdminOverview> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/admin/overview`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(await getErrorMessage(response, "Failed to load admin overview"));
     }
 
     return response.json();
