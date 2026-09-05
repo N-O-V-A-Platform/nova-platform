@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional, Any, Dict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class CreateSessionRequest(BaseModel):
     title: str = Field(..., example="Class 10 Physics — Electricity & Ohm's Law")
@@ -18,6 +18,14 @@ class SectionResponse(BaseModel):
     duration_mins: int
     key_concepts: Optional[List[str]] = None
     status: str
+
+    @field_validator("key_concepts", mode="before")
+    @classmethod
+    def unwrap_key_concepts(cls, value: Any) -> Any:
+        """Expose the persisted concept wrapper as the list promised by the API."""
+        if isinstance(value, dict):
+            return value.get("concepts", [])
+        return value
 
     class Config:
         from_attributes = True

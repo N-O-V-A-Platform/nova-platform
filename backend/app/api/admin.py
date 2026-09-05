@@ -1,16 +1,85 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from typing import List
 
 from app.auth.dependencies import RoleChecker
+from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import Role, User
+from app.models.analytics import AuditLog
 from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/admin", tags=["Admin Approval"])
+
+
+@router.get("/overview")
+async def get_admin_overview(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin"])),
+):
+    """Return operational data without ever exposing secret values."""
+    total_users = (await db.execute(select(func.count(User.id)))).scalar_one()
+    active_users = (
+        await db.execute(select(func.count(User.id)).where(User.is_active.is_(True)))
+    ).scalar_one()
+    student_count = (
+        await db.execute(
+            select(func.count(User.id)).join(User.role).where(Role.name == "Student")
+        )
+    ).scalar_one()
+    lecturer_count = (
+        await db.execute(
+            select(func.count(User.id)).join(User.role).where(Role.name == "Lecturer")
+        )
+    ).scalar_one()
+    pending_lecturers = (
+        await db.execute(
+            select(func.count(User.id))
+            .join(User.role)
+            .where(User.status == "Pending Approval", Role.name == "Lecturer")
+        )
+    ).scalar_one()
+
+    from app.models.scrape import ScrapedSource
+    from app.workers.scraper import scrape_worker
+
+    scraped_sources = (await db.execute(select(func.count(ScrapedSource.id)))).scalar_one()
+    indexed_chunks = (
+        await db.execute(select(func.coalesce(func.sum(ScrapedSource.chunk_count), 0)))
+    ).scalar_one()
+    last_scrape = (
+        await db.execute(select(func.max(ScrapedSource.last_scraped_at)))
+    ).scalar_one()
+
+    integrations = [
+        {"name": "NVIDIA NIM", "configured": bool(settings.NVIDIA_API_KEY)},
+        {"name": "Groq", "configured": bool(settings.GROQ_API_KEY)},
+        {"name": "OpenRouter", "configured": bool(settings.OPENROUTER_API_KEY)},
+        {"name": "Gemini", "configured": bool(settings.GEMINI_API_KEY)},
+        {"name": "OpenAI", "configured": bool(settings.OPENAI_API_KEY)},
+        {"name": "Pinecone", "configured": bool(settings.PINECONE_API_KEY)},
+    ]
+
+    return {
+        "users": {
+            "total": total_users,
+            "active": active_users,
+            "students": student_count,
+            "lecturers": lecturer_count,
+            "pending_lecturers": pending_lecturers,
+        },
+        "scraper": {
+            "is_running": scrape_worker.is_running,
+            "sources": scraped_sources,
+            "indexed_chunks": indexed_chunks,
+            "last_run": last_scrape.isoformat() if last_scrape else None,
+        },
+        "integrations": integrations,
+    }
 
 @router.get("/pending-lecturers", response_model=List[UserResponse])
 async def get_pending_lecturers(
@@ -49,7 +118,7 @@ async def get_pending_lecturers(
 async def approve_lecturer(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(RoleChecker(["Admin"])),
+    admin: User = Depends(RoleChecker(["Admin"])),
 ):
     result = await db.execute(
         select(User)
@@ -71,6 +140,14 @@ async def approve_lecturer(
     user.is_active = True
     user.status = "Active"
     db.add(user)
+    db.add(
+        AuditLog(
+            user_id=admin.id,
+            action="approved_lecturer",
+            entity_name="user",
+            entity_id=user.id,
+        )
+    )
     await db.commit()
     await db.refresh(user)
     return {"message": f"Lecturer {user.first_name} {user.last_name} approved successfully."}
@@ -79,7 +156,7 @@ async def approve_lecturer(
 async def reject_lecturer(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(RoleChecker(["Admin"])),
+    admin: User = Depends(RoleChecker(["Admin"])),
 ):
     result = await db.execute(
         select(User)
@@ -101,6 +178,14 @@ async def reject_lecturer(
     user.status = "Rejected"
     user.is_active = False
     db.add(user)
+    db.add(
+        AuditLog(
+            user_id=admin.id,
+            action="rejected_lecturer",
+            entity_name="user",
+            entity_id=user.id,
+        )
+    )
     await db.commit()
     return {"message": f"Lecturer {user.first_name} {user.last_name} registration request rejected."}
 

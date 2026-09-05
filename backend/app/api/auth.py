@@ -110,9 +110,10 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     hashed_password = get_password_hash(user_in.password)
     is_admin = _is_admin_email(email_clean)
     
-    # By default in dev mode (or for students), auto-verify email so registration works seamlessly
+    # When email verification is disabled, every manually created account is
+    # verified immediately. Lecturer access is still gated by admin approval.
     require_verification = os.getenv("REQUIRE_EMAIL_VERIFICATION", "0") == "1"
-    is_email_verified = is_admin or (not require_verification and role_name == "Student")
+    is_email_verified = is_admin or not require_verification
 
     user = User(
         email=email_clean,
@@ -251,6 +252,15 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect email or password"
         )
+
+    # Keep accounts created while verification was disabled usable. This also
+    # repairs lecturer accounts created by the earlier student-only rule.
+    require_verification = os.getenv("REQUIRE_EMAIL_VERIFICATION", "0") == "1"
+    if not require_verification and not user.is_email_verified:
+        user.is_email_verified = True
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
 
     # Auto-promote/verify admin email in case it was registered beforehand or lacks proper state
     if _is_admin_email(user.email):
@@ -832,4 +842,3 @@ async def onboard_user(
         refresh_token=refresh_token,
         user=user_response
     )
-
