@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     API_V1_STR: str = "/api/v1"
-    BACKEND_CORS_ORIGINS: str = "http://localhost:3000"
+    BACKEND_CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     FRONTEND_URL: str = "http://localhost:3000"
 
     DATABASE_URL: str = Field(

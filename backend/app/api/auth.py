@@ -241,16 +241,13 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             detail="An account with this email address does not exist. Please register first."
         )
 
-    if not user.password_hash or not verify_password(credentials.password, user.password_hash):
-        # Check if this is a Google-only account (random uuid password)
-        if user.is_email_verified and not user.password_hash:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This account was created with Google Sign-In. Please use the Google button to log in."
-            )
+    password_ok = bool(user.password_hash) and verify_password(
+        credentials.password, user.password_hash
+    )
+    if not password_ok:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
         )
 
     # Keep accounts created while verification was disabled usable. This also

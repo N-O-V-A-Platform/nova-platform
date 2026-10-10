@@ -52,19 +52,32 @@ services:
     env_file:
       - ./backend/.env.docker
 
+    environment:
+      RUNNING_IN_DOCKER: "1"
+      REQUIRE_EMAIL_VERIFICATION: "0"
+
     ports:
       - "8000:8000"
 
     volumes:
       - ./backend:/app
 
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -c "alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
     networks:
       - nova_network
@@ -77,6 +90,12 @@ services:
     container_name: nova_frontend
     restart: unless-stopped
 
+    env_file:
+      - ./frontend/.env.local
+
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+
     ports:
       - "3000:3000"
 
@@ -85,7 +104,8 @@ services:
       - /app/node_modules
 
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
     networks:
       - nova_network

@@ -7,6 +7,6 @@ router = APIRouter()
 async def health_check():
     return {
         "status": "healthy",
-        "service": settings.PROJECT_NAME,
-        "version": settings.VERSION
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
     }

@@ -8,7 +8,7 @@ interface AuthContextType {
   user: UserResponse | null;
   loading: boolean;
   theme: "light" | "dark";
-  login: (credentials: any) => Promise<void>;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (data: RegisterRequest) => Promise<TokenResponse>;
   googleLogin: (idToken: string) => Promise<void>;
   onboard: (data: any) => Promise<void>;
@@ -19,9 +19,21 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function redirectAfterAuth(user: UserResponse, router: ReturnType<typeof useRouter>) {
+  if (user.role_name === "Admin") {
+    router.push("/admin");
+  } else if (!user.is_onboarded) {
+    router.push("/onboarding");
+  } else if (user.role_name === "Lecturer") {
+    router.push("/lecturer/dashboard");
+  } else {
+    router.push("/student/dashboard");
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [initializing, setInitializing] = useState<boolean>(true);
   const [theme, setTheme] = useState<"light">("light");
   const router = useRouter();
 
@@ -59,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const minDuration = 1600; // 1.6s minimum splash loading time
       const remainingTime = Math.max(0, minDuration - elapsed);
       setTimeout(() => {
-        setLoading(false);
+        setInitializing(false);
       }, remainingTime);
     }
   };
@@ -68,99 +80,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser();
   }, []);
 
-  const login = async (credentials: any) => {
-    setLoading(true);
-    try {
-      const res = await authService.login(credentials);
-      setUser(res.user);
-      setLoading(false);
-      
-      // Redirect based on role and onboarding status
-      if (res.user.role_name === "Admin") {
-        router.push("/admin");
-      } else if (!res.user.is_onboarded) {
-        router.push("/onboarding");
-      } else if (res.user.role_name === "Lecturer") {
-        router.push("/lecturer/dashboard");
-      } else {
-        router.push("/student/dashboard");
-      }
-    } catch (err) {
-      setLoading(false);
-      throw err;
-    }
+  const login = async (credentials: { email: string; password: string }) => {
+    const res = await authService.login(credentials);
+    setUser(res.user);
+    redirectAfterAuth(res.user, router);
   };
 
   const register = async (data: RegisterRequest): Promise<TokenResponse> => {
-    setLoading(true);
-    try {
-      const res = await authService.register(data);
+    const res = await authService.register(data);
 
-      // If access_token is empty, registration succeeded but email verification is required
-      if (!res.access_token) {
-        setLoading(false);
-        // Don't store tokens or set user — the register page will explain the next step.
-        return res;
-      }
-
-      setUser(res.user);
-      setLoading(false);
-      
-      // Redirect based on role and onboarding status
-      if (res.user.role_name === "Admin") {
-        router.push("/admin");
-      } else if (!res.user.is_onboarded) {
-        router.push("/onboarding");
-      } else if (res.user.role_name === "Lecturer") {
-        router.push("/lecturer/dashboard");
-      } else {
-        router.push("/student/dashboard");
-      }
+    // Empty tokens mean registration succeeded but email verification or
+    // lecturer approval is still required — stay on the register page.
+    if (!res.access_token) {
       return res;
-    } catch (err) {
-      setLoading(false);
-      throw err;
     }
+
+    setUser(res.user);
+    redirectAfterAuth(res.user, router);
+    return res;
   };
 
   const googleLogin = async (idToken: string) => {
-    setLoading(true);
-    try {
-      const res = await authService.googleAuth(idToken);
-      setUser(res.user);
-      setLoading(false);
-      
-      // Redirect based on role and onboarding status
-      if (res.user.role_name === "Admin") {
-        router.push("/admin");
-      } else if (!res.user.is_onboarded) {
-        router.push("/onboarding");
-      } else if (res.user.role_name === "Lecturer") {
-        router.push("/lecturer/dashboard");
-      } else {
-        router.push("/student/dashboard");
-      }
-    } catch (err) {
-      setLoading(false);
-      throw err;
-    }
+    const res = await authService.googleAuth(idToken);
+    setUser(res.user);
+    redirectAfterAuth(res.user, router);
   };
 
   const onboard = async (data: any) => {
-    setLoading(true);
-    try {
-      const res = await authService.onboard(data);
-      setUser(res.user);
-      setLoading(false);
-      
-      if (res.user.role_name === "Lecturer") {
-        router.push("/lecturer/dashboard");
-      } else {
-        router.push("/student/dashboard");
-      }
-    } catch (err) {
-      setLoading(false);
-      throw err;
+    const res = await authService.onboard(data);
+    setUser(res.user);
+
+    if (res.user.role_name === "Lecturer") {
+      router.push("/lecturer/dashboard");
+    } else {
+      router.push("/student/dashboard");
     }
   };
 
@@ -172,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ user, loading, theme, login, register, googleLogin, onboard, logout, refreshUser, toggleTheme }}>
+    <AuthContext.Provider value={{ user, loading: initializing, theme, login, register, googleLogin, onboard, logout, refreshUser, toggleTheme }}>
       {children}
     </AuthContext.Provider>
   );

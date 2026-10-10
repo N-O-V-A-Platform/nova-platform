@@ -1,5 +1,23 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
+const BACKEND_UNAVAILABLE_MESSAGE =
+  "Cannot reach the N.O.V.A. backend. Make sure the API is running on port 8000, then try again.";
+
+async function parseResponse<T>(response: Response, fallback: string): Promise<T> {
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response, fallback));
+  }
+  return response.json() as Promise<T>;
+}
+
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch {
+    throw new Error(BACKEND_UNAVAILABLE_MESSAGE);
+  }
+}
+
 export interface UserResponse {
   id: string;
   email: string;
@@ -134,17 +152,13 @@ export const authService = {
   },
 
   async register(data: RegisterRequest): Promise<TokenResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      throw new Error(await getErrorMessage(response, "Registration failed"));
-    }
-
-    const resData: TokenResponse = await response.json();
+    const resData = await parseResponse<TokenResponse>(response, "Registration failed");
     // Only store tokens if they are non-empty (email verification flow returns empty tokens)
     if (resData.access_token) {
       this.setToken(resData.access_token);
@@ -154,35 +168,26 @@ export const authService = {
   },
 
   async login(data: LoginRequest): Promise<TokenResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      throw new Error(await getErrorMessage(response, "Login failed"));
-    }
-
-    const resData: TokenResponse = await response.json();
+    const resData = await parseResponse<TokenResponse>(response, "Login failed");
     this.setToken(resData.access_token);
     this.setRefreshToken(resData.refresh_token);
     return resData;
   },
 
   async googleAuth(idToken: string): Promise<TokenResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id_token: idToken }),
     });
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.detail || "Google login failed");
-    }
-
-    const resData: TokenResponse = await response.json();
+    const resData = await parseResponse<TokenResponse>(response, "Google login failed");
     this.setToken(resData.access_token);
     this.setRefreshToken(resData.refresh_token);
     return resData;
