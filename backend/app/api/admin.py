@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from typing import List
+from typing import List, Optional
 
 from app.auth.dependencies import RoleChecker
 from app.core.config import settings
@@ -252,3 +252,45 @@ async def get_scraped_sources(
     from app.models.scrape import ScrapedSource
     result = await db.execute(select(ScrapedSource).order_by(ScrapedSource.created_at.desc()))
     return result.scalars().all()
+
+
+from pydantic import BaseModel
+
+
+class SingleScrapeRequest(BaseModel):
+    url: str
+    title: Optional[str] = None
+    product: Optional[str] = "Course Resource"
+
+
+@router.post("/scrape/single")
+async def scrape_single_url_endpoint(
+    payload: SingleScrapeRequest,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin", "Lecturer"])),
+):
+    """Scrape and index an arbitrary URL into the knowledge base on demand."""
+    from app.workers.scraper import scrape_worker
+
+    url = payload.url.strip()
+    if not url.startswith("http://") and not url.startswith("https://"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid URL format. URL must start with http:// or https://",
+        )
+
+    result = await scrape_worker.scrape_single_url(
+        url=url,
+        title=payload.title,
+        db=db,
+        product=payload.product or "Course Resource",
+    )
+
+    if result.get("status") == "error":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=result.get("error", "Failed to scrape and index URL."),
+        )
+
+    return result
+

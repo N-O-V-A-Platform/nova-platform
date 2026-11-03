@@ -1,6 +1,7 @@
 from app.models.ai import AIConversation, Escalation, Question
 from app.models.ai_teacher import LearningSession, LessonPlan, LessonSection, TeachingInteraction, Misconception
 from app.models.analytics import AuditLog
+from app.models.classroom import AttendanceRecord, LiveMessage, LiveSession, TeachingReport
 from app.models.course import Course, Enrollment
 from app.models.institution import Department, Institution
 from app.models.lecture import Lecture
@@ -14,6 +15,7 @@ from app.models.workflow import Workflow
 
 __all__ = [
     "AIConversation",
+    "AttendanceRecord",
     "AuditLog",
     "Badge",
     "Certificate",
@@ -25,6 +27,8 @@ __all__ = [
     "KnowledgeBase",
     "LearningSession",
     "Lecture",
+    "LiveMessage",
+    "LiveSession",
     "LessonPlan",
     "LessonSection",
     "Misconception",
@@ -40,6 +44,7 @@ __all__ = [
     "ScrapedSource",
     "SkillPassport",
     "TeachingInteraction",
+    "TeachingReport",
     "User",
     "Workflow",
 ]

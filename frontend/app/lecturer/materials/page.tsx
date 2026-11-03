@@ -21,6 +21,28 @@ export default function LecturerMaterials() {
   const [msg, setMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [polling, setPolling] = useState(false);
+  const [customUrl, setCustomUrl] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
+  const [isScrapingCustom, setIsScrapingCustom] = useState(false);
+
+  const handleScrapeCustom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customUrl.trim()) return;
+    setIsScrapingCustom(true);
+    setMsg("");
+    setErrorMsg("");
+    try {
+      const res = await authService.scrapeSingleUrl(customUrl.trim(), customTitle.trim() || undefined);
+      setMsg(`Successfully scraped "${res.title || customUrl}"! Indexed ${res.chunk_count || 0} chunks.`);
+      setCustomUrl("");
+      setCustomTitle("");
+      await fetchScraperData();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to scrape custom URL");
+    } finally {
+      setIsScrapingCustom(false);
+    }
+  };
 
   const fetchScraperData = async () => {
     try {
@@ -246,6 +268,48 @@ export default function LecturerMaterials() {
               Updates global AI knowledge index silently.
             </p>
           </div>
+        </div>
+
+        {/* Ingest Custom Web Page / Documentation Form */}
+        <div className="sketch-card p-6 bg-white dark:bg-[var(--canvas-card)] mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-4">
+            <div>
+              <h3 className="text-2xl font-bold font-handwriting">
+                Index Any Web Documentation or Course Resource
+              </h3>
+              <p className="text-xs font-casual text-gray-500">
+                Provide an external webpage or documentation URL to chunk, embed, and ingest into the AI Teacher knowledge base.
+              </p>
+            </div>
+          </div>
+          <form onSubmit={handleScrapeCustom} className="flex flex-col md:flex-row gap-3">
+            <input
+              type="url"
+              required
+              value={customUrl}
+              onChange={(e) => setCustomUrl(e.target.value)}
+              placeholder="https://example.com/docs/intro"
+              className="flex-1 sketch-input px-3.5 py-2 font-casual text-sm border-2 rounded"
+            />
+            <input
+              type="text"
+              value={customTitle}
+              onChange={(e) => setCustomTitle(e.target.value)}
+              placeholder="Custom Label (Optional)"
+              className="md:w-64 sketch-input px-3.5 py-2 font-casual text-sm border-2 rounded"
+            />
+            <button
+              type="submit"
+              disabled={isScrapingCustom || !customUrl.trim()}
+              className={`px-5 py-2 font-handwriting text-sm border-2 rounded whitespace-nowrap transition-all ${
+                isScrapingCustom || !customUrl.trim()
+                  ? "bg-zinc-100 border-zinc-300 text-zinc-400 cursor-not-allowed"
+                  : "sketch-btn-primary"
+              }`}
+            >
+              {isScrapingCustom ? "Scraping & Indexing..." : "Scrape & Index"}
+            </button>
+          </form>
         </div>
 
         {/* Scraped Sources Table */}

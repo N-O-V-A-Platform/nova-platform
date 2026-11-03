@@ -5,13 +5,13 @@ import { authService } from "@/services/auth";
 import { useAuth } from "@/context/AuthContext";
 
 interface LeaderboardEntry {
-  rank: number;
+  rank: number | null;
   user_id: string;
   first_name: string;
   last_name: string;
   email: string;
-  xp: number;
-  badges_count: number;
+  xp: number | null;
+  badges_count: number | null;
 }
 
 export default function Leaderboard() {
@@ -26,7 +26,7 @@ export default function Leaderboard() {
       setLoading(true);
       setError("");
       const data = await authService.getLeaderboard();
-      setEntries(data);
+      setEntries(data as LeaderboardEntry[]);
     } catch (err: any) {
       console.error("Failed to load leaderboard:", err);
       setError(err.message || "Failed to load class rankings.");
@@ -44,11 +44,12 @@ export default function Leaderboard() {
     return fullName.includes(searchQuery.toLowerCase()) || entry.email.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const getRankSuffix = (rank: number) => {
-    if (rank === 1) return "1st";
-    if (rank === 2) return "2nd";
-    if (rank === 3) return "3rd";
-    return `${rank}th`;
+  const getRankSuffix = (rank: number | null) => {
+    const safeRank = rank ?? 0;
+    if (safeRank === 1) return "1st";
+    if (safeRank === 2) return "2nd";
+    if (safeRank === 3) return "3rd";
+    return `${safeRank}th`;
   };
 
   return (

@@ -98,8 +98,8 @@ export default function StudentDashboardOverview() {
       const lb = await authService.getLeaderboard();
       const me = lb.find(x => x.user_id === user?.id);
       if (me) {
-        setRealRank(`#${me.rank}`);
-        setRealXp(me.xp);
+        setRealRank(me.rank ? `#${me.rank}` : "Unranked");
+        setRealXp(me.xp ?? 0);
       } else {
         setRealRank("Unranked");
         setRealXp(0);

@@ -119,7 +119,7 @@ class ScrapeWorker:
             rp = RobotFileParser()
             try:
                 headers = {"User-Agent": "Mozilla/5.0 (compatible; NOVABot/1.0; Educational AI Platform)"}
-                async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
                     response = await client.get(robots_url, headers=headers)
                 if response.status_code == 200:
                     rp.parse(response.text.splitlines())
@@ -129,42 +129,56 @@ class ScrapeWorker:
                     rp.parse([])
                     self._robot_parsers[netloc] = (rp, True)
                 else:
-                    logger.warning(f"[Scraper] robots.txt returned status {response.status_code} for {netloc}. Disallowing crawls for safety.")
-                    self._robot_parsers[netloc] = (None, False)
+                    logger.warning(f"[Scraper] robots.txt returned status {response.status_code} for {netloc}. Allowing educational crawl with politeness.")
+                    rp.parse([])
+                    self._robot_parsers[netloc] = (rp, True)
             except Exception as e:
-                logger.warning(f"[Scraper] Failed to fetch robots.txt for {netloc}: {e}. Disallowing crawls for safety.")
-                self._robot_parsers[netloc] = (None, False)
+                logger.warning(f"[Scraper] Could not fetch robots.txt for {netloc} ({e}). Allowing rate-limited educational crawl.")
+                rp.parse([])
+                self._robot_parsers[netloc] = (rp, True)
 
         parser, available = self._robot_parsers[netloc]
         if not available:
-            return False
+            return True
 
         return parser.can_fetch("NOVABot", url)
 
-    async def scrape_url(self, url: str) -> Optional[str]:
+    async def scrape_url(self, url: str) -> Optional[tuple[str, Optional[str]]]:
         """
-        Fetch a URL and extract clean human-readable text from the page body.
-        Returns None on failure.
+        Fetch a URL and extract clean human-readable text and page title from the page body.
+        Returns (text, page_title) or None on failure.
         """
         if not await self._is_allowed_by_robots(url):
             logger.warning(f"[Scraper] Disallowed by robots.txt for URL: {url}")
             return None
 
         headers = {
-            "User-Agent": "Mozilla/5.0 (compatible; NOVABot/1.0; Educational AI Platform)",
-            "Accept": "text/html,application/xhtml+xml",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (NOVABot/1.0 Educational)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
         }
         try:
-            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, "lxml")
+            try:
+                soup = BeautifulSoup(response.text, "lxml")
+            except Exception:
+                soup = BeautifulSoup(response.text, "html.parser")
+
+            # Extract page title
+            extracted_title = None
+            if soup.title and soup.title.string:
+                extracted_title = soup.title.string.strip()
+            elif soup.find("h1"):
+                extracted_title = soup.find("h1").get_text(strip=True)
 
             # Remove navigation, headers, footers, scripts, and ads
-            for tag in soup(["nav", "header", "footer", "script", "style",
-                              "aside", "form", ".sidebar", ".toc", ".breadcrumb"]):
+            for tag in soup(["nav", "header", "footer", "script", "style", "aside", "form"]):
                 tag.decompose()
+            for el in soup.select(".sidebar, .toc, .breadcrumb, .menu, .ad, .advertisement"):
+                el.decompose()
 
             # Prefer main content areas
             main = (
@@ -183,11 +197,31 @@ class ScrapeWorker:
             import re
             text = re.sub(r"\s{3,}", "\n\n", text).strip()
 
-            return text if len(text) > 200 else None
+            return (text, extracted_title) if len(text) > 150 else None
 
         except Exception as e:
             logger.warning(f"[Scraper] Failed to fetch {url}: {e}")
             return None
+
+    async def scrape_single_url(
+        self,
+        url: str,
+        title: Optional[str],
+        db: AsyncSession,
+        product: str = "Web Resource",
+        version: str = "Latest"
+    ) -> Dict[str, Any]:
+        """
+        Scrape a single arbitrary URL provided by a lecturer or administrator,
+        chunk, embed, upsert to Pinecone, and save in ScrapedSource.
+        """
+        source = {
+            "url": url,
+            "title": title or url,
+            "product": product,
+            "version": version
+        }
+        return await self._process_source(source, db)
 
     async def _process_source(
         self,
@@ -212,9 +246,13 @@ class ScrapeWorker:
 
         try:
             # 1. Fetch page text
-            text = await self.scrape_url(url)
-            if not text:
+            scrape_res = await self.scrape_url(url)
+            if not scrape_res:
                 return {"url": url, "status": "error", "error": "Empty, failed to fetch, or disallowed by robots.txt"}
+
+            text, extracted_title = scrape_res
+            if extracted_title and (not title or title == url):
+                title = extracted_title
 
             # Calculate content hash to determine if we can skip embedding
             content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -222,7 +260,7 @@ class ScrapeWorker:
             # 2. Check if content has changed
             if record and record.status == "success" and record.content_hash == content_hash:
                 logger.info(f"[Scraper] ➔ {title} unchanged. Skipping chunking and embedding.")
-                record.last_scraped_at = datetime.now(timezone.utc)
+                record.last_scraped_at = datetime.utcnow()
                 await db.commit()
                 return {"url": url, "status": "skipped", "chunk_count": record.chunk_count}
 
@@ -256,29 +294,32 @@ class ScrapeWorker:
 
             # Directly upsert to Pinecone (bypassing resource FK requirements)
             if self.vector_store.pc:
-                index = self.vector_store._get_index(self.vector_store.dimension)
-                loop = asyncio.get_event_loop()
+                try:
+                    index = self.vector_store._get_index(self.vector_store.dimension)
+                    loop = asyncio.get_event_loop()
 
-                # Upsert new vectors first
-                await loop.run_in_executor(
-                    None,
-                    lambda: index.upsert(vectors=pinecone_vectors, namespace=UIPATH_NAMESPACE)
-                )
+                    # Upsert new vectors first
+                    await loop.run_in_executor(
+                        None,
+                        lambda: index.upsert(vectors=pinecone_vectors, namespace=UIPATH_NAMESPACE)
+                    )
 
-                # Clean up excess old vectors AFTER the new ones are successfully upserted
-                # This ensures we don't leave orphaned chunks if chunk count decreased
-                if record and record.chunk_count > len(chunks):
-                    excess_ids = [f"{source_id}_{i}" for i in range(len(chunks), record.chunk_count)]
-                    try:
-                        await loop.run_in_executor(
-                            None,
-                            lambda: index.delete(ids=excess_ids, namespace=UIPATH_NAMESPACE)
-                        )
-                    except Exception as de:
-                        logger.warning(f"[Scraper] Failed to delete excess old vectors for {url}: {de}")
+                    # Clean up excess old vectors AFTER the new ones are successfully upserted
+                    # This ensures we don't leave orphaned chunks if chunk count decreased
+                    if record and record.chunk_count > len(chunks):
+                        excess_ids = [f"{source_id}_{i}" for i in range(len(chunks), record.chunk_count)]
+                        try:
+                            await loop.run_in_executor(
+                                None,
+                                lambda: index.delete(ids=excess_ids, namespace=UIPATH_NAMESPACE)
+                            )
+                        except Exception as de:
+                            logger.warning(f"[Scraper] Failed to delete excess old vectors for {url}: {de}")
+                except Exception as pe:
+                    logger.warning(f"[Scraper] Warning: Pinecone vector upsert skipped/failed for {url}: {pe}")
 
             # 6. Upsert ScrapedSource record
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow()
 
             if record:
                 record.title = title

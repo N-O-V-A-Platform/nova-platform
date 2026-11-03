@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
 
 import app.models
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from jose import jwt
 
 from app.core.config import settings
 from app.api.v1.router import api_router
@@ -24,7 +25,6 @@ async def lifespan(app: FastAPI):
     def _warm_embedding_model():
         try:
             from app.ai.embeddings import _load_model
-            from app.core.config import settings
             _load_model(settings.EMBEDDING_MODEL)  # triggers @lru_cache load
             print("[NOVA] Embedding model pre-warmed and ready.")
         except Exception as e:
@@ -101,9 +101,48 @@ import os
 os.makedirs("static/uploads", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    token = websocket.query_params.get("token") or websocket.headers.get("authorization", "").replace("Bearer ", "", 1)
+    user_id = websocket.query_params.get("user_id")
+
+    if not token and not user_id:
+        await websocket.close(code=1008)
+        return
+
+    resolved_user_id = user_id
+    if token and not resolved_user_id:
+        try:
+            payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+            resolved_user_id = payload.get("sub")
+        except Exception:
+            await websocket.close(code=1008)
+            return
+
+    if not resolved_user_id:
+        await websocket.close(code=1008)
+        return
+
+    from app.realtime import manager
+    await manager.connect(websocket, str(resolved_user_id))
+    try:
+        while True:
+            message = await websocket.receive_json()
+            event_type = message.get("type") if isinstance(message, dict) else None
+            room = message.get("room") if isinstance(message, dict) else None
+            if event_type == "join_room" and room:
+                manager.join_room(websocket, str(room))
+            elif event_type == "ping":
+                await manager.send_personal(websocket, "pong", {"ok": True})
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, str(resolved_user_id))
+
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to N.O.V.A API"}
+
 
 @app.get("/health")
 async def health():

@@ -83,7 +83,104 @@ export interface AdminOverview {
   integrations: Array<{ name: string; configured: boolean }>;
 }
 
-type ApiRecord = Record<string, any>;
+export interface NotificationItem {
+  id: string;
+  title: string;
+  category: string;
+  link?: string | null;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  prompt: string;
+  options: string[];
+  correct_index?: number | null;
+  explanation?: string | null;
+}
+
+export interface QuizAttempt {
+  id: string;
+  score: number;
+  answers: any[];
+  submitted_at: string;
+}
+
+export interface QuizRecord {
+  id: string;
+  course_id: string;
+  title: string;
+  topic?: string | null;
+  generated_by_ai: boolean;
+  is_published: boolean;
+  created_at: string;
+  question_count: number;
+  questions: QuizQuestion[];
+  my_attempt?: QuizAttempt | null;
+  attempt_count?: number | null;
+  average_score?: number | null;
+}
+
+export interface StudentAnalyticsSummary {
+  courses_enrolled?: number;
+  questions_asked?: number;
+  quizzes_taken?: number;
+  average_quiz_score?: number | null;
+  best_quiz_score?: number | null;
+  attendance_checkins?: number;
+  badges?: number;
+  certificates?: number;
+  weak_topics?: Array<{ topic: string; score: number }>;
+  recent_scores?: Array<{ score: number; submitted_at: string }>;
+}
+
+export interface LecturerAnalyticsSummary {
+  courses?: number;
+  students?: number;
+  questions_asked?: number;
+  pending_escalations?: number;
+  resources?: number;
+  live_sessions?: number;
+  average_quiz_score?: number | null;
+  attendance_rate?: number | null;
+  difficult_topics?: Array<{ topic: string; average_score: number }>;
+  course_breakdown?: Array<any>;
+}
+
+export type ApiRecord = Record<string, any>;
+
+export interface LeaderboardEntry {
+  id?: string;
+  user_id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  rank?: number | null;
+  xp?: number | null;
+  badges_count?: number | null;
+}
+
+export interface CourseResource {
+  id: string;
+  course_id?: string;
+  file_name: string;
+  file_type?: string;
+  storage_url?: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  course_id?: string;
+  title?: string;
+  questions?: Array<{
+    id?: string;
+    question: string;
+    response?: string | null;
+    confidence_score?: number | null;
+  }>;
+}
 
 async function getErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
@@ -521,7 +618,7 @@ export const authService = {
     return response.json();
   },
 
-  async getUiPathJourney(): Promise<unknown> {
+  async getUiPathJourney(): Promise<ApiRecord> {
     const headers = await this.getHeaders();
     const response = await fetch(`${API_BASE_URL}/uipath/journey`, {
       method: "GET",
@@ -560,11 +657,11 @@ export const authService = {
     const response = await fetch(`${API_BASE_URL}/uipath/upload-certificate`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ 
-        course_id: courseId, 
-        issue_date: issueDate, 
-        verification_url: verificationUrl, 
-        verification_id: verificationId || null 
+      body: JSON.stringify({
+        course_id: courseId,
+        issue_date: issueDate,
+        verification_url: verificationUrl,
+        verification_id: verificationId || null,
       }),
     });
 
@@ -650,7 +747,7 @@ export const authService = {
     return response.json();
   },
 
-  async toggleReminders(): Promise<any> {
+  async toggleReminders(): Promise<{ reminders_enabled: boolean }> {
     const headers = await this.getHeaders();
     const response = await fetch(`${API_BASE_URL}/users/toggle-reminders`, {
       method: "POST",
@@ -664,7 +761,7 @@ export const authService = {
     return response.json();
   },
 
-  async getLeaderboard(): Promise<any[]> {
+  async getLeaderboard(): Promise<LeaderboardEntry[]> {
     const headers = await this.getHeaders();
     const response = await fetch(`${API_BASE_URL}/users/leaderboard`, {
       method: "GET",
@@ -680,13 +777,13 @@ export const authService = {
 
   async getScrapeStatus(): Promise<any> {
     const headers = await this.getHeaders();
-    const response = await fetch(`${API_BASE_URL}/admin/scrape/status`, {
+    const response = await fetch(`${API_BASE_URL}/uipath/scrape-status`, {
       method: "GET",
       headers,
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch scrape status");
+      throw new Error("Failed to fetch scraper status");
     }
 
     return response.json();
@@ -694,7 +791,7 @@ export const authService = {
 
   async getScrapedSources(): Promise<any[]> {
     const headers = await this.getHeaders();
-    const response = await fetch(`${API_BASE_URL}/admin/scrape/sources`, {
+    const response = await fetch(`${API_BASE_URL}/uipath/sources`, {
       method: "GET",
       headers,
     });
@@ -708,15 +805,106 @@ export const authService = {
 
   async triggerScrape(): Promise<any> {
     const headers = await this.getHeaders();
-    const response = await fetch(`${API_BASE_URL}/admin/scrape/trigger`, {
+    const response = await fetch(`${API_BASE_URL}/uipath/trigger-scrape`, {
       method: "POST",
       headers,
     });
 
     if (!response.ok) {
-      throw new Error("Failed to trigger scraper");
+      const errData = await response.json();
+      throw new Error(errData.detail || "Failed to trigger scraper");
+    }
+
+    return response.json();
+  },
+
+  async scrapeSingleUrl(url: string, title?: string): Promise<any> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/uipath/scrape-url`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ url, title }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.detail || "Failed to scrape URL");
+    }
+
+    return response.json();
+  },
+
+  async getNotifications(unreadOnly = false): Promise<NotificationItem[]> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/notifications/?unread_only=${String(unreadOnly)}`, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch notifications");
+    }
+
+    return response.json();
+  },
+
+  async markNotificationRead(notificationId: string): Promise<NotificationItem> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+      method: "PUT",
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to mark notification as read");
+    }
+
+    return response.json();
+  },
+
+  async getStudentAnalytics(): Promise<StudentAnalyticsSummary> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/analytics/student`, { method: "GET", headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch student analytics");
+    }
+    return response.json();
+  },
+
+  async getLecturerAnalytics(): Promise<LecturerAnalyticsSummary> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/analytics/lecturer`, { method: "GET", headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch lecturer analytics");
+    }
+    return response.json();
+  },
+
+  async getQuizzes(courseId?: string): Promise<QuizRecord[]> {
+    const headers = await this.getHeaders();
+    const url = new URL(`${API_BASE_URL}/quizzes/`);
+    if (courseId) url.searchParams.set("course_id", courseId);
+    const response = await fetch(url.toString(), { method: "GET", headers });
+    if (!response.ok) {
+      throw new Error("Failed to fetch quizzes");
+    }
+    return response.json();
+  },
+
+  async submitQuizAttempt(quizId: string, answers: Record<string, number>): Promise<QuizRecord> {
+    const headers = await this.getHeaders();
+    const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}/submit`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ answers }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || "Failed to submit quiz");
     }
 
     return response.json();
   }
 };
+
