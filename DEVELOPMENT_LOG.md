@@ -109,3 +109,15 @@ nova-platform/
     - Issues an in-app formal disciplinary warning notification to the student profile (`Notification.category = "integrity_violation"`).
     - Automatically dispatches a high-priority incident alert to all platform Administrators (`Notification.category = "forgery_intercepted"`).
     - Logs a permanent security violation in the PostgreSQL `audit_logs` ledger.
+
+- **Admin Control Center Expansion (Full Operational Suite)**:
+  - **Public Announcement Broadcaster**:
+    - Backend: `POST /api/v1/admin/broadcast-announcement` sends database notifications and realtime WebSocket events (`manager.send_to_user`) targeted to "All", "Student", or "Lecturer" groups.
+    - Frontend: Added interactive "Public Announcements" tab in `frontend/app/admin/page.tsx` featuring quick message templates (Monthly Prizes, New Course Tracks, Maintenance notices), live in-app student notification preview, and target audience selector.
+  - **Security & Forgery Alerts Center**:
+    - Backend: `GET /api/v1/admin/security-alerts` queries intercepted forgery attempts flagged by the `CertificateInspectorAgent`.
+    - Frontend: Added "Security & Forgery Alerts" tab in `frontend/app/admin/page.tsx` with dynamic incident alert badges, real-time scanning, student identification, claimed course, forged URL analysis, and timestamp audit trail.
+  - **User Directory & Account Status Management**:
+    - Backend: `GET /api/v1/admin/users-management` (with role filtering and eager loading of user roles) and `PUT /api/v1/admin/users/{user_id}/status` allowing admins to suspend or reactivate accounts.
+    - Frontend: Added "User Management" tab in `frontend/app/admin/page.tsx` with real-time text search, role filter chips (All, Student, Lecturer, Admin), user registration timeline, active status badges, and one-click Suspend/Reactivate controls.
+  - **Database Migration**: Added Alembic migration `g9b2c3d4e5f6_add_notification_metadata_columns.py` to upgrade the `notifications` table with `title`, `category`, and `link` columns.

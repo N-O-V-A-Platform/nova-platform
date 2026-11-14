@@ -5,6 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
+from pydantic import BaseModel, Field
 
 from app.auth.dependencies import RoleChecker
 from app.core.config import settings
@@ -462,3 +463,131 @@ async def toggle_maintenance_mode(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update maintenance state: {str(e)}")
+
+class BroadcastAnnouncementRequest(BaseModel):
+    title: str = Field(..., example="🎉 Monthly RPA Championship Prizes Announced!")
+    message: str = Field(..., example="Congratulations to the top 3 learners this month. Certificates for all participants are ready!")
+    target_role: Optional[str] = Field("All", description="'All', 'Student', or 'Lecturer'")
+    link: Optional[str] = Field(None, example="/student/uipath")
+
+@router.post("/broadcast-announcement")
+async def broadcast_announcement(
+    payload: BroadcastAnnouncementRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(RoleChecker(["Admin"])),
+):
+    """
+    Dispatches a platform-wide public announcement notification to all active users,
+    students, or faculty members with realtime WebSocket notification broadcast.
+    """
+    from app.realtime import manager
+    from app.models.notification import Notification
+
+    # Query target recipients
+    user_query = select(User).where(User.is_active.is_(True))
+    if payload.target_role and payload.target_role != "All":
+        user_query = user_query.join(User.role).where(Role.name == payload.target_role)
+
+    users_res = await db.execute(user_query)
+    recipients = users_res.scalars().all()
+
+    created_count = 0
+    for u in recipients:
+        note = Notification(
+            user_id=u.id,
+            title=f"📢 {payload.title}",
+            category="announcement",
+            link=payload.link,
+            message=payload.message
+        )
+        db.add(note)
+        created_count += 1
+        # Send realtime websocket event
+        try:
+            await manager.send_to_user(str(u.id), "notification.created", {
+                "title": payload.title,
+                "message": payload.message,
+                "link": payload.link
+            })
+        except Exception:
+            pass
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "message": f"Announcement broadcasted to {created_count} users successfully.",
+        "recipients_count": created_count
+    }
+
+@router.get("/security-alerts")
+async def get_security_alerts(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(RoleChecker(["Admin"])),
+):
+    """
+    Returns security violation audit logs, intercepted forgery attempts,
+    and administrative security alerts.
+    """
+    from app.models.notification import Notification
+    alerts_query = (
+        select(Notification)
+        .where(Notification.user_id == admin_user.id, Notification.category == "forgery_intercepted")
+        .order_by(Notification.created_at.desc())
+        .limit(20)
+    )
+    res = await db.execute(alerts_query)
+    alerts = res.scalars().all()
+    return [
+        {
+            "id": str(a.id),
+            "title": a.title,
+            "message": a.message,
+            "created_at": a.created_at.isoformat(),
+            "is_read": a.is_read
+        }
+        for a in alerts
+    ]
+
+@router.get("/users-management")
+async def list_all_users_for_admin(
+    role_filter: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin"])),
+):
+    """Returns directory of users with role, status, creation date, and credentials count."""
+    query = select(User).options(selectinload(User.role)).order_by(User.created_at.desc()).limit(100)
+    if role_filter:
+        query = query.join(User.role).where(Role.name == role_filter)
+
+    res = await db.execute(query)
+    users = res.scalars().all()
+    return [
+        {
+            "id": str(u.id),
+            "first_name": u.first_name,
+            "last_name": u.last_name,
+            "email": u.email,
+            "role": u.role.name if u.role else "Student",
+            "status": u.status,
+            "is_active": u.is_active,
+            "created_at": u.created_at.strftime("%Y-%m-%d")
+        }
+        for u in users
+    ]
+
+@router.put("/users/{user_id}/status")
+async def update_user_status(
+    user_id: uuid.UUID,
+    new_status: str = Query(..., pattern="^(Active|Suspended|Inactive)$"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin"])),
+):
+    """Allows admin to suspend, activate, or deactivate any account."""
+    user = (await db.execute(select(User).where(User.id == user_id))).scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.status = new_status
+    user.is_active = (new_status == "Active")
+    await db.commit()
+    return {"message": f"User '{user.email}' status updated to {new_status}."}
