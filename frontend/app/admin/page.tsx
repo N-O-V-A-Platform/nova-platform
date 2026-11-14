@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { AdminOverview, authService, PendingLecturer } from "@/services/auth";
 
-type AdminTab = "overview" | "approvals" | "operations" | "integrations";
+type AdminTab = "overview" | "approvals" | "submissions" | "operations" | "integrations";
 
 const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "overview", label: "Overview" },
+  { id: "submissions", label: "Student Excel Reports" },
   { id: "approvals", label: "Approvals" },
   { id: "operations", label: "Operations" },
   { id: "integrations", label: "Integrations" },
@@ -209,6 +210,48 @@ export default function AdminPage() {
                     </section>
                   </div>
                 </div>
+              )}
+
+              {activeTab === "submissions" && (
+                <section className="space-y-6">
+                  <div className="rounded-xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_0_rgba(0,0,0,1)]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-black pb-4">
+                      <div>
+                        <p className="font-casual text-xs uppercase tracking-wide text-zinc-500">Student Certification Records</p>
+                        <h1 className="font-handwriting text-3xl font-bold">Monthly Submissions & Excel Export</h1>
+                        <p className="mt-1 font-casual text-xs text-zinc-600 max-w-xl">
+                          Track which students completed and submitted which UiPath or RPA certifications on a month-by-month basis. Download formatted spreadsheet reports.
+                        </p>
+                      </div>
+                      <a
+                        href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/admin/export-submissions-excel`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg border-2 border-black bg-[#E75A3D] px-4 py-2.5 font-handwriting text-base font-bold text-white shadow-[3px_3px_0_0_rgba(0,0,0,1)] hover:bg-[#d4482c] transition shrink-0 flex items-center gap-2"
+                      >
+                        <span>📥</span> Download Excel Ledger (.xlsx)
+                      </a>
+                    </div>
+
+                    <div className="mt-6 grid gap-4 sm:grid-cols-3 font-casual">
+                      <div className="rounded-lg border-2 border-black p-4 bg-emerald-50">
+                        <span className="text-xs text-emerald-800 font-bold uppercase">Report Format</span>
+                        <h4 className="font-handwriting text-xl font-bold text-emerald-950 mt-1">Multi-Sheet Workbook</h4>
+                        <p className="text-[11px] text-emerald-700 mt-1">Includes student profiles, email, certificate name, submission timestamps, and monthly totals.</p>
+                      </div>
+                      <div className="rounded-lg border-2 border-black p-4 bg-orange-50">
+                        <span className="text-xs text-[#E75A3D] font-bold uppercase">Automated Ledger</span>
+                        <h4 className="font-handwriting text-xl font-bold text-orange-950 mt-1">Live Database Sync</h4>
+                        <p className="text-[11px] text-orange-800 mt-1">Auto-updates whenever students submit certificates in the Skill Passport.</p>
+                      </div>
+                      <div className="rounded-lg border-2 border-black p-4 bg-blue-50">
+                        <span className="text-xs text-blue-800 font-bold uppercase">Audit Verification</span>
+                        <h4 className="font-handwriting text-xl font-bold text-blue-950 mt-1">Issuer Authenticity</h4>
+                        <p className="text-[11px] text-blue-800 mt-1">Distinguishes UiPath Academy, Coursera, AWS, and campus certificates.</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               )}
 
               {activeTab === "approvals" && (

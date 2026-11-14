@@ -10,122 +10,12 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.skills import Certificate, Badge
 from app.auth.dependencies import get_current_user
+from app.api.uipath_courses_data import UIPATH_RPA_COURSES
 
 router = APIRouter(prefix="/uipath", tags=["UiPath Academy Integration"])
 
-# Structured list of 10 core N.O.V.A AI & Computer Science courses
-UIPATH_COURSES = [
-    {
-        "id": "11111111-1111-1111-1111-111111111111",
-        "title": "Introduction to Artificial Intelligence",
-        "code": "CS-AI-1",
-        "enroll_url": "/student/courses",
-        "description": "Learn the fundamentals of AI, neural networks, and modern intelligent systems.",
-        "badge_name": "AI Starter Badge",
-        "difficulty": "Beginner",
-        "duration": "1.5 Hours",
-        "xp": 100
-    },
-    {
-        "id": "22222222-2222-2222-2222-222222222222",
-        "title": "Machine Learning Fundamentals",
-        "code": "CS-ML-2",
-        "enroll_url": "/student/courses",
-        "description": "Introduction to supervised and unsupervised learning algorithms and data preprocessing.",
-        "badge_name": "ML Explorer Badge",
-        "difficulty": "Beginner",
-        "duration": "3.0 Hours",
-        "xp": 200
-    },
-    {
-        "id": "33333333-3333-3333-3333-333333333333",
-        "title": "Algorithms & Control Flow",
-        "code": "CS-ALG-3",
-        "enroll_url": "/student/courses",
-        "description": "Master core computational logic, complexity analysis, and control flows.",
-        "badge_name": "Flow Master Badge",
-        "difficulty": "Intermediate",
-        "duration": "4.0 Hours",
-        "xp": 250
-    },
-    {
-        "id": "44444444-4444-4444-4444-444444444444",
-        "title": "Data Structures & Database Systems",
-        "code": "CS-DAT-4",
-        "enroll_url": "/student/courses",
-        "description": "Learn to manage arrays, trees, SQL databases, and relational data models.",
-        "badge_name": "Data Wizard Badge",
-        "difficulty": "Intermediate",
-        "duration": "4.5 Hours",
-        "xp": 300
-    },
-    {
-        "id": "55555555-5555-5555-5555-555555555555",
-        "title": "Python Programming & Data Analytics",
-        "code": "CS-PY-5",
-        "enroll_url": "/student/courses",
-        "description": "Process, analyze, and visualize numerical datasets using Python and Pandas.",
-        "badge_name": "Python Analytics Badge",
-        "difficulty": "Intermediate",
-        "duration": "5.0 Hours",
-        "xp": 350
-    },
-    {
-        "id": "66666666-6666-6666-6666-666666666666",
-        "title": "Web Development & Frontend Frameworks",
-        "code": "CS-WEB-6",
-        "enroll_url": "/student/courses",
-        "description": "Build interactive web applications using React, modern CSS, and Next.js.",
-        "badge_name": "Web Specialist Badge",
-        "difficulty": "Intermediate",
-        "duration": "6.0 Hours",
-        "xp": 400
-    },
-    {
-        "id": "77777777-7777-7777-7777-777777777777",
-        "title": "Natural Language Processing & LLMs",
-        "code": "CS-NLP-7",
-        "enroll_url": "/student/courses",
-        "description": "Understand transformers, text embeddings, vector stores, and prompt engineering.",
-        "badge_name": "NLP Integrator Badge",
-        "difficulty": "Intermediate",
-        "duration": "4.0 Hours",
-        "xp": 250
-    },
-    {
-        "id": "88888888-8888-8888-8888-888888888888",
-        "title": "Computer Vision & Visual Intelligence",
-        "code": "CS-CV-8",
-        "enroll_url": "/student/courses",
-        "description": "Process image feeds, object detection models, and spatial feature extraction.",
-        "badge_name": "Vision Reader Badge",
-        "difficulty": "Intermediate",
-        "duration": "3.5 Hours",
-        "xp": 200
-    },
-    {
-        "id": "99999999-9999-9999-9999-999999999999",
-        "title": "Software Architecture & System Design",
-        "code": "CS-SYS-9",
-        "enroll_url": "/student/courses",
-        "description": "Learn modular system design, microservices, state management, and scalability.",
-        "badge_name": "Architect Badge",
-        "difficulty": "Advanced",
-        "duration": "5.5 Hours",
-        "xp": 450
-    },
-    {
-        "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-        "title": "Debugging & Exception Handling",
-        "code": "CS-ERR-10",
-        "enroll_url": "/student/courses",
-        "description": "Use diagnostic tools, automated testing, and try/catch exception scopes to build resilient apps.",
-        "badge_name": "Bug Hunter Badge",
-        "difficulty": "Advanced",
-        "duration": "6.0 Hours",
-        "xp": 500
-    }
-]
+# Comprehensive 10-course UiPath Robotic Process Automation (RPA) Curricula
+UIPATH_COURSES = UIPATH_RPA_COURSES
 
 class CertificateUploadRequest(BaseModel):
     course_id: str
@@ -316,3 +206,80 @@ async def get_uipath_recommendations(
                     break
                     
     return ai_recs[:3]
+
+class GeneralCertificateRequest(BaseModel):
+    title: str = Field(..., description="Certificate name, e.g. UiPath Automation Developer Associate")
+    issuer: str = Field("UiPath Academy", description="Issuer, e.g. UiPath Academy, Coursera")
+    issue_date: str = Field(..., description="YYYY-MM-DD")
+    verification_url: Optional[str] = Field(None, description="Verification or diploma link")
+
+@router.get("/my-certificates")
+async def get_my_certificates(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    cert_result = await db.execute(
+        select(Certificate).where(Certificate.user_id == current_user.id).order_by(Certificate.issue_date.desc())
+    )
+    badge_result = await db.execute(
+        select(Badge).where(Badge.user_id == current_user.id).order_by(Badge.awarded_at.desc())
+    )
+    
+    certs = [
+        {
+            "id": str(c.id),
+            "title": c.title,
+            "issuer": c.issuer,
+            "issue_date": str(c.issue_date),
+            "badge_name": "Verified Credential"
+        }
+        for c in cert_result.scalars().all()
+    ]
+    
+    badges = [
+        {
+            "id": str(b.id),
+            "badge_name": b.badge_name,
+            "awarded_at": b.awarded_at.isoformat()
+        }
+        for b in badge_result.scalars().all()
+    ]
+    
+    return {
+        "certificates": certs,
+        "badges": badges
+    }
+
+@router.post("/certificates")
+async def submit_general_certificate(
+    payload: GeneralCertificateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        parsed_date = datetime.strptime(payload.issue_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Expected YYYY-MM-DD.")
+        
+    cert = Certificate(
+        user_id=current_user.id,
+        title=payload.title,
+        issuer=payload.issuer,
+        issue_date=parsed_date
+    )
+    db.add(cert)
+    
+    # Also award an achievement badge
+    badge = Badge(
+        user_id=current_user.id,
+        badge_name=f"{payload.title[:30]} Achiever"
+    )
+    db.add(badge)
+    
+    await db.commit()
+    await db.refresh(cert)
+    
+    return {
+        "message": "Certificate submitted and recorded successfully!",
+        "certificate_id": str(cert.id)
+    }

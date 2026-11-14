@@ -86,3 +86,7 @@ nova-platform/
 ```
 
 - **Google OAuth UI Polish**: Updated `GoogleAuthButton.tsx` so that when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is unset (local dev mode), it gracefully hides itself instead of showing an intrusive red error banner.
+
+- **Dedicated UiPath RPA Specialization Catalog**: Converted `UIPATH_COURSES` in `backend/app/api/uipath.py` (via `uipath_courses_data.py`) to 10 pure robotic process automation and intelligent automation modules (UiPath Studio, Excel automation, UI Selectors, Document Understanding OCR, Email automation, Orchestrator queues, REFramework, and official Certification prep).
+- **Automated Excel Export for Admin**: Implemented `GET /api/v1/admin/export-submissions-excel` utilizing `openpyxl`. Generates formatted `.xlsx` workbooks detailing monthly student submissions, student profiles (name, email), certificate names, issuers, timestamps, and aggregate monthly summaries.
+- **Admin Control Center Enhancement**: Added a dedicated "Student Excel Reports" tab in `frontend/app/admin/page.tsx` with one-click direct download of monthly student submission spreadsheets.

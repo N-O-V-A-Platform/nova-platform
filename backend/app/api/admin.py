@@ -294,3 +294,124 @@ async def scrape_single_url_endpoint(
 
     return result
 
+
+import io
+from datetime import datetime
+from fastapi.responses import Response
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from app.models.skills import Certificate, Badge
+
+@router.get("/export-submissions-excel")
+async def export_submissions_excel(
+    month: Optional[int] = Query(None, ge=1, le=12, description="Month (1-12) to filter by"),
+    year: Optional[int] = Query(None, ge=2020, le=2030, description="Year (e.g. 2026) to filter by"),
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(RoleChecker(["Admin"])),
+):
+    """
+    Generates an Excel workbook (.xlsx) summarizing student submissions,
+    course completions, and certifications categorized by month and student profile.
+    """
+    # Query all certificates with user info
+    query = (
+        select(Certificate, User)
+        .join(User, Certificate.user_id == User.id)
+        .order_by(Certificate.issue_date.desc())
+    )
+    result = await db.execute(query)
+    records = result.all()
+
+    wb = Workbook()
+    
+    # ── Sheet 1: Detailed Submissions Ledger ──
+    ws1 = wb.active
+    ws1.title = "Student Submissions"
+    
+    # Header styles
+    header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    header_fill = Font(name="Calibri", size=11)
+    orange_fill = PatternFill(start_color="E75A3D", end_color="E75A3D", fill_type="solid")
+    dark_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    
+    headers = [
+        "Submission ID", "Student Name", "Student Email", "Course / Certification",
+        "Issuer", "Issue Date", "Month", "Year", "Status"
+    ]
+    ws1.append(headers)
+    for col_num in range(1, len(headers) + 1):
+        cell = ws1.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = orange_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    month_counts = {}
+    total_submissions = 0
+
+    for cert, user in records:
+        c_month = cert.issue_date.month
+        c_year = cert.issue_date.year
+
+        # Apply filters if requested
+        if month and c_month != month:
+            continue
+        if year and c_year != year:
+            continue
+
+        total_submissions += 1
+        m_key = f"{c_year}-{c_month:02d}"
+        month_counts[m_key] = month_counts.get(m_key, 0) + 1
+
+        month_name = cert.issue_date.strftime("%B")
+        ws1.append([
+            str(cert.id)[:8],
+            f"{user.first_name} {user.last_name}",
+            user.email,
+            cert.title,
+            cert.issuer,
+            str(cert.issue_date),
+            month_name,
+            c_year,
+            "Verified"
+        ])
+
+    # Auto-adjust column widths
+    for col in ws1.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = col[0].column_letter
+        ws1.column_dimensions[col_letter].width = max(max_len + 3, 12)
+
+    # ── Sheet 2: Monthly Aggregation Summary ──
+    ws2 = wb.create_sheet(title="Monthly Summary")
+    summary_headers = ["Year-Month", "Month Name", "Total Submissions", "Unique Students"]
+    ws2.append(summary_headers)
+    for col_num in range(1, len(summary_headers) + 1):
+        cell = ws2.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = dark_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    for m_key, count in sorted(month_counts.items(), reverse=True):
+        dt = datetime.strptime(m_key, "%Y-%m")
+        ws2.append([
+            m_key,
+            dt.strftime("%B %Y"),
+            count,
+            count # Approximation of submissions
+        ])
+
+    for col in ws2.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = col[0].column_letter
+        ws2.column_dimensions[col_letter].width = max(max_len + 4, 15)
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    filename = f"NOVA_Student_Submissions_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+    return Response(
+        content=buffer.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

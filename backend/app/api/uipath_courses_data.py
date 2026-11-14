@@ -1,0 +1,122 @@
+UIPATH_RPA_COURSES = [
+    {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "title": "UiPath Studio Basics & Workflow Design",
+        "code": "RPA-STU-1",
+        "category": "Foundation",
+        "enroll_url": "/student/courses",
+        "description": "Learn to design sequences, flowcharts, state machines, variables, and arguments in UiPath Studio.",
+        "badge_name": "RPA Starter Badge",
+        "difficulty": "Beginner",
+        "duration": "2.5 Hours",
+        "xp": 150
+    },
+    {
+        "id": "22222222-2222-2222-2222-222222222222",
+        "title": "Excel & Data Table Automation in UiPath",
+        "code": "RPA-XLS-2",
+        "category": "Data Automation",
+        "enroll_url": "/student/courses",
+        "description": "Read, write, filter, and automate complex Excel operations, formulas, and large CSV datasets without MS Office.",
+        "badge_name": "Excel Automation Pro",
+        "difficulty": "Beginner",
+        "duration": "3.5 Hours",
+        "xp": 250
+    },
+    {
+        "id": "33333333-3333-3333-3333-333333333333",
+        "title": "Web & Desktop UI Automation (Selectors & Descriptors)",
+        "code": "RPA-SEL-3",
+        "category": "UI Automation",
+        "enroll_url": "/student/courses",
+        "description": "Master strict selectors, fuzzy selectors, computer vision, and dynamic anchor targeting across desktop & browser apps.",
+        "badge_name": "Selector Specialist",
+        "difficulty": "Intermediate",
+        "duration": "4.0 Hours",
+        "xp": 300
+    },
+    {
+        "id": "44444444-4444-4444-4444-444444444444",
+        "title": "PDF, OCR & Document Understanding Automation",
+        "code": "RPA-DOC-4",
+        "category": "Intelligent Document Processing",
+        "enroll_url": "/student/courses",
+        "description": "Extract text, tables, and invoice entities from scanned documents using UiPath Document Understanding and OCR engines.",
+        "badge_name": "Doc Intelligence Master",
+        "difficulty": "Intermediate",
+        "duration": "4.5 Hours",
+        "xp": 350
+    },
+    {
+        "id": "55555555-5555-5555-5555-555555555555",
+        "title": "Email, Exchange & Outlook Robotic Automation",
+        "code": "RPA-EML-5",
+        "category": "Business Operations",
+        "enroll_url": "/student/courses",
+        "description": "Automate IMAP, POP3, SMTP, and Microsoft Exchange mailboxes: save attachments, parse subjects, and dispatch auto-replies.",
+        "badge_name": "Mailbot Specialist",
+        "difficulty": "Intermediate",
+        "duration": "3.0 Hours",
+        "xp": 200
+    },
+    {
+        "id": "66666666-6666-6666-6666-666666666666",
+        "title": "UiPath Orchestrator & Asset Queue Management",
+        "code": "RPA-ORC-6",
+        "category": "Enterprise Infrastructure",
+        "enroll_url": "/student/courses",
+        "description": "Deploy unattended robot machines, manage credentials/assets securely, schedule trigger jobs, and process transaction queues.",
+        "badge_name": "Orchestrator Engineer",
+        "difficulty": "Advanced",
+        "duration": "5.0 Hours",
+        "xp": 450
+    },
+    {
+        "id": "77777777-7777-7777-7777-777777777777",
+        "title": "Robotic Enterprise Framework (REFramework) Architecture",
+        "code": "RPA-REF-7",
+        "category": "Advanced Architecture",
+        "enroll_url": "/student/courses",
+        "description": "Master production-grade state machine design with Init, Get Transaction Data, Process Transaction, and End Process states.",
+        "badge_name": "REFramework Architect",
+        "difficulty": "Advanced",
+        "duration": "6.5 Hours",
+        "xp": 500
+    },
+    {
+        "id": "88888888-8888-8888-8888-888888888888",
+        "title": "API & Web Services Integration with UiPath",
+        "code": "RPA-API-8",
+        "category": "Integration",
+        "enroll_url": "/student/courses",
+        "description": "Build hybrid automations combining REST/SOAP HTTP requests, JSON parsing, and UI clicks into seamless workflows.",
+        "badge_name": "API Automation Specialist",
+        "difficulty": "Intermediate",
+        "duration": "3.5 Hours",
+        "xp": 300
+    },
+    {
+        "id": "99999999-9999-9999-9999-999999999999",
+        "title": "UiPath AI Center & Machine Learning Model Integration",
+        "code": "RPA-AIC-9",
+        "category": "AI Automation",
+        "enroll_url": "/student/courses",
+        "description": "Deploy sentiment analysis, NER, and custom PyTorch/TensorFlow ML models directly into UiPath RPA workflows via AI Center.",
+        "badge_name": "AI Automation Pioneer",
+        "difficulty": "Advanced",
+        "duration": "5.5 Hours",
+        "xp": 500
+    },
+    {
+        "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "title": "UiPath Automation Developer Certification Prep",
+        "code": "RPA-CERT-10",
+        "category": "Certification",
+        "enroll_url": "/student/courses",
+        "description": "Comprehensive mock exams, case studies, debugging drills, and timing strategies for official UiPath Associate & Professional certs.",
+        "badge_name": "Certified Automation Developer",
+        "difficulty": "Advanced",
+        "duration": "8.0 Hours",
+        "xp": 600
+    }
+]

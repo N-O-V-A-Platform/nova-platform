@@ -273,12 +273,12 @@ export default function SkillPassportPage() {
         )}
       </div>
 
-      {/* Available UiPath / N.O.V.A Curriculum Tracks */}
+      {/* Available UiPath & RPA Curriculum Tracks */}
       <div className="bg-white dark:bg-zinc-900 border-2 border-black rounded-2xl p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
         <h2 className="text-xl font-bold font-handwriting text-black dark:text-white mb-2 flex items-center gap-2">
-          <span>🚀</span> Available CS & RPA Specialization Tracks
+          <span>🤖</span> Official UiPath & RPA Certification Curriculum Tracks
         </h2>
-        <p className="text-xs font-casual text-zinc-500 mb-4">Complete these tracks to earn verified passport badges and XP credentials.</p>
+        <p className="text-xs font-casual text-zinc-500 mb-4">Complete these official automation tracks (Studio, Selectors, REFramework, Orchestrator) to earn verified passport badges, verify diplomas, and mint XP credentials.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {courses.map((course) => (
