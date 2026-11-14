@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { AdminOverview, authService, PendingLecturer } from "@/services/auth";
 
-type AdminTab = "overview" | "approvals" | "submissions" | "operations" | "integrations";
+type AdminTab = "overview" | "maintenance" | "submissions" | "approvals" | "operations" | "integrations";
 
 const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "overview", label: "Overview" },
+  { id: "maintenance", label: "Maintenance Mode" },
   { id: "submissions", label: "Student Excel Reports" },
   { id: "approvals", label: "Approvals" },
   { id: "operations", label: "Operations" },
@@ -34,6 +35,8 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false);
+  const [maintenanceMsg, setMaintenanceMsg] = useState("");
 
   useEffect(() => {
     if (!authLoading && (!user || user.role_name !== "Admin")) {
@@ -45,12 +48,19 @@ export default function AdminPage() {
     setLoading(true);
     setError("");
     try {
-      const [nextOverview, nextLecturers] = await Promise.all([
+      const token = authService.getToken();
+      const [nextOverview, nextLecturers, maintRes] = await Promise.all([
         authService.getAdminOverview(),
         authService.getPendingLecturers(),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/admin/maintenance-status`),
       ]);
       setOverview(nextOverview);
       setLecturers(nextLecturers);
+      if (maintRes.ok) {
+        const mData = await maintRes.json();
+        setMaintenanceEnabled(Boolean(mData.maintenance_mode));
+        setMaintenanceMsg(mData.message || "");
+      }
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {
@@ -63,6 +73,39 @@ export default function AdminPage() {
       void loadDashboard();
     }
   }, [user, loadDashboard]);
+
+  const handleToggleMaintenance = async (enable: boolean) => {
+    setActionLoading(true);
+    setMessage("");
+    setError("");
+    try {
+      const token = authService.getToken();
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/admin/maintenance-mode`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          enabled: enable,
+          message: maintenanceMsg || "N.O.V.A. is currently under scheduled maintenance. Please check back shortly.",
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        setMaintenanceEnabled(enable);
+        setMessage(json.message);
+      } else {
+        const err = await res.json();
+        setError(err.detail || "Failed to toggle maintenance mode.");
+      }
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleAction = async (id: string, action: "approve" | "reject") => {
     setActionLoading(true);
@@ -210,6 +253,72 @@ export default function AdminPage() {
                     </section>
                   </div>
                 </div>
+              )}
+
+              {activeTab === "maintenance" && (
+                <section className="space-y-6">
+                  <div className="rounded-xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_0_rgba(0,0,0,1)]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-black pb-4">
+                      <div>
+                        <p className="font-casual text-xs uppercase tracking-wide text-zinc-500">Platform Availability & Control</p>
+                        <h1 className="font-handwriting text-3xl font-bold">Server Maintenance Mode</h1>
+                        <p className="mt-1 font-casual text-xs text-zinc-600 max-w-xl">
+                          Toggle the public website into an instant maintenance lockdown. When active, students and general visitors see a friendly construction screen. <strong>You and the administrator portal remain completely unaffected.</strong>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`rounded-full px-3 py-1 font-casual text-xs font-bold ${
+                            maintenanceEnabled ? "bg-amber-100 text-amber-800 border border-amber-400" : "bg-emerald-100 text-emerald-800 border border-emerald-400"
+                          }`}
+                        >
+                          {maintenanceEnabled ? "⚠️ Maintenance Active" : "✓ Platform Online"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold font-mono uppercase text-zinc-600 mb-1">
+                          Custom Notice for Public Visitors
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={maintenanceMsg}
+                          onChange={(e) => setMaintenanceMsg(e.target.value)}
+                          placeholder="e.g. N.O.V.A. is currently upgrading its autonomous reasoning models. Normal access will resume in 30 minutes."
+                          className="w-full rounded-lg border-2 border-black p-3 text-sm font-casual focus:outline-none focus:ring-2 focus:ring-[#E75A3D]"
+                        />
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t-2 border-zinc-200">
+                        <p className="text-xs font-casual text-zinc-500">
+                          State persists across server restarts via Redis persistent store.
+                        </p>
+                        <div className="flex gap-2">
+                          {maintenanceEnabled ? (
+                            <button
+                              disabled={actionLoading}
+                              onClick={() => handleToggleMaintenance(false)}
+                              className="rounded-lg border-2 border-black bg-emerald-600 px-4 py-2 font-handwriting text-base font-bold text-white shadow-[3px_3px_0_0_rgba(0,0,0,1)] hover:bg-emerald-700 transition"
+                            >
+                              Deactivate Maintenance (Bring Website Online)
+                            </button>
+                          ) : (
+                            <button
+                              disabled={actionLoading}
+                              onClick={() => handleToggleMaintenance(true)}
+                              className="rounded-lg border-2 border-black bg-amber-500 px-4 py-2 font-handwriting text-base font-bold text-black shadow-[3px_3px_0_0_rgba(0,0,0,1)] hover:bg-amber-600 transition"
+                            >
+                              Activate Maintenance Mode
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               )}
 
               {activeTab === "submissions" && (

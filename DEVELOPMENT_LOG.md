@@ -90,3 +90,10 @@ nova-platform/
 - **Dedicated UiPath RPA Specialization Catalog**: Converted `UIPATH_COURSES` in `backend/app/api/uipath.py` (via `uipath_courses_data.py`) to 10 pure robotic process automation and intelligent automation modules (UiPath Studio, Excel automation, UI Selectors, Document Understanding OCR, Email automation, Orchestrator queues, REFramework, and official Certification prep).
 - **Automated Excel Export for Admin**: Implemented `GET /api/v1/admin/export-submissions-excel` utilizing `openpyxl`. Generates formatted `.xlsx` workbooks detailing monthly student submissions, student profiles (name, email), certificate names, issuers, timestamps, and aggregate monthly summaries.
 - **Admin Control Center Enhancement**: Added a dedicated "Student Excel Reports" tab in `frontend/app/admin/page.tsx` with one-click direct download of monthly student submission spreadsheets.
+
+- **Self-Learning Transformation**: Configured student flow to focus on self-directed study journeys, discovery of 10 core UiPath RPA tracks, certificate submissions, and automated XP minting.
+- **Master Admin Account Provisioning**: Seeded administrator account credentials (`admin@nova.edu` with secret key `NovaAdminSecret2026!#`) giving full operational authority.
+- **Server Maintenance Mode Control**:
+  - Implemented `GET /api/v1/admin/maintenance-status` and `POST /api/v1/admin/maintenance-mode` backed by persistent Redis flags (`nova_system_maintenance`).
+  - Added frontend maintenance interception in `app/components/AuthAppWrapper.tsx`: redirects public visitors and learners to a maintenance screen while leaving `/admin` and authenticated Administrators completely unaffected.
+  - Added interactive "Maintenance Mode" control panel in `app/admin/page.tsx` allowing one-click activation/deactivation and custom notice configuration.

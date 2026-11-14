@@ -415,3 +415,44 @@ async def export_submissions_excel(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+from pydantic import BaseModel
+from app.ai.memory_service import redis_memory
+
+class MaintenanceToggleRequest(BaseModel):
+    enabled: bool
+    message: Optional[str] = "N.O.V.A. is currently under scheduled maintenance. Please check back shortly."
+
+@router.get("/maintenance-status")
+async def get_maintenance_status():
+    """Returns whether maintenance mode is currently active (public read)."""
+    try:
+        is_active = await redis_memory.redis.get("nova_system_maintenance")
+        custom_msg = await redis_memory.redis.get("nova_system_maintenance_msg")
+        return {
+            "maintenance_mode": bool(is_active and is_active.decode() == "1"),
+            "message": custom_msg.decode() if custom_msg else "Platform maintenance is underway."
+        }
+    except Exception:
+        return {"maintenance_mode": False, "message": ""}
+
+@router.post("/maintenance-mode")
+async def toggle_maintenance_mode(
+    payload: MaintenanceToggleRequest,
+    _: User = Depends(RoleChecker(["Admin"])),
+):
+    """Allows administrator to toggle maintenance mode on or off."""
+    try:
+        if payload.enabled:
+            await redis_memory.redis.set("nova_system_maintenance", "1")
+            await redis_memory.redis.set("nova_system_maintenance_msg", payload.message or "Platform maintenance is underway.")
+        else:
+            await redis_memory.redis.delete("nova_system_maintenance")
+            await redis_memory.redis.delete("nova_system_maintenance_msg")
+        return {
+            "success": True,
+            "maintenance_mode": payload.enabled,
+            "message": f"Maintenance mode {'activated' if payload.enabled else 'deactivated'} successfully."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update maintenance state: {str(e)}")
