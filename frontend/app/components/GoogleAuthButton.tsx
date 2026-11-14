@@ -45,10 +45,10 @@ export default function GoogleAuthButton() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // If no Google Client ID is configured in the environment, don't show an intrusive red banner
-  if (!GOOGLE_CLIENT_ID) {
-    return null;
-  }
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) {
+      return;
+    }
 
     const initializeGoogleSignIn = () => {
       if (!window.google || !buttonRef.current || initializedRef.current) {
@@ -113,6 +113,11 @@ export default function GoogleAuthButton() {
       script.onerror = null;
     };
   }, [googleLogin]);
+
+  // If no Google Client ID is configured, do not render button or warning banner
+  if (!GOOGLE_CLIENT_ID) {
+    return null;
+  }
 
   return (
     <div className="w-full space-y-3">
