@@ -417,21 +417,26 @@ async def export_submissions_excel(
     )
 
 from pydantic import BaseModel
-from app.ai.memory_service import redis_memory
+import redis.asyncio as aioredis
+from app.core.config import settings
 
 class MaintenanceToggleRequest(BaseModel):
     enabled: bool
     message: Optional[str] = "N.O.V.A. is currently under scheduled maintenance. Please check back shortly."
 
+async def _get_admin_redis():
+    return await aioredis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
+
 @router.get("/maintenance-status")
 async def get_maintenance_status():
     """Returns whether maintenance mode is currently active (public read)."""
     try:
-        is_active = await redis_memory.redis.get("nova_system_maintenance")
-        custom_msg = await redis_memory.redis.get("nova_system_maintenance_msg")
+        r = await _get_admin_redis()
+        is_active = await r.get("nova_system_maintenance")
+        custom_msg = await r.get("nova_system_maintenance_msg")
         return {
-            "maintenance_mode": bool(is_active and is_active.decode() == "1"),
-            "message": custom_msg.decode() if custom_msg else "Platform maintenance is underway."
+            "maintenance_mode": bool(is_active and str(is_active) == "1"),
+            "message": str(custom_msg) if custom_msg else "Platform maintenance is underway."
         }
     except Exception:
         return {"maintenance_mode": False, "message": ""}
@@ -443,12 +448,13 @@ async def toggle_maintenance_mode(
 ):
     """Allows administrator to toggle maintenance mode on or off."""
     try:
+        r = await _get_admin_redis()
         if payload.enabled:
-            await redis_memory.redis.set("nova_system_maintenance", "1")
-            await redis_memory.redis.set("nova_system_maintenance_msg", payload.message or "Platform maintenance is underway.")
+            await r.set("nova_system_maintenance", "1")
+            await r.set("nova_system_maintenance_msg", payload.message or "Platform maintenance is underway.")
         else:
-            await redis_memory.redis.delete("nova_system_maintenance")
-            await redis_memory.redis.delete("nova_system_maintenance_msg")
+            await r.delete("nova_system_maintenance")
+            await r.delete("nova_system_maintenance_msg")
         return {
             "success": True,
             "maintenance_mode": payload.enabled,

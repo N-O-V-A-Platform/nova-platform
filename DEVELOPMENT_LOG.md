@@ -97,3 +97,15 @@ nova-platform/
   - Implemented `GET /api/v1/admin/maintenance-status` and `POST /api/v1/admin/maintenance-mode` backed by persistent Redis flags (`nova_system_maintenance`).
   - Added frontend maintenance interception in `app/components/AuthAppWrapper.tsx`: redirects public visitors and learners to a maintenance screen while leaving `/admin` and authenticated Administrators completely unaffected.
   - Added interactive "Maintenance Mode" control panel in `app/admin/page.tsx` allowing one-click activation/deactivation and custom notice configuration.
+
+- **Automated Anti-Forgery & Certificate Inspection Agent**:
+  - Created `app/ai/certificate_inspector.py` (`CertificateInspectorAgent`):
+    - Enforces cryptographic SSL transport (`https://`).
+    - Performs authority domain verification (UiPath Academy, Credly, Coursera, etc.).
+    - Detects domain spoofing, homograph attacks, and generic root domain pastes without tokenized diploma hashes.
+    - Conducts live headless HTTP probes to catch dead/404 forged diploma links.
+  - **Student Warning & Admin Alert Dispatch**:
+    - If a fake or forged credential is submitted, the submission is rejected.
+    - Issues an in-app formal disciplinary warning notification to the student profile (`Notification.category = "integrity_violation"`).
+    - Automatically dispatches a high-priority incident alert to all platform Administrators (`Notification.category = "forgery_intercepted"`).
+    - Logs a permanent security violation in the PostgreSQL `audit_logs` ledger.

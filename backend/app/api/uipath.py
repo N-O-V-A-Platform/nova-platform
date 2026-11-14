@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.skills import Certificate, Badge
 from app.auth.dependencies import get_current_user
 from app.api.uipath_courses_data import UIPATH_RPA_COURSES
+from app.ai.certificate_inspector import CertificateInspectorAgent
 
 router = APIRouter(prefix="/uipath", tags=["UiPath Academy Integration"])
 
@@ -103,16 +104,23 @@ async def upload_certificate(
     if existing.scalars().first():
         raise HTTPException(status_code=400, detail="You have already uploaded a certificate for this course.")
 
-    # Verification URL domain check (rejection of fake certificates)
-    url_lower = data.verification_url.strip().lower()
-    is_valid_domain = any(
-        domain in url_lower 
-        for domain in ["academy.uipath.com", "credentials.uipath.com", "uipath.academy"]
+    # Deep Inspection with CertificateInspectorAgent
+    is_valid, flaw_reason, _ = await CertificateInspectorAgent.inspect_credential(
+        title=course["title"],
+        issuer="UiPath Academy",
+        verification_url=data.verification_url
     )
-    if not url_lower.startswith("https://") or not is_valid_domain or len(url_lower) < 30:
+    if not is_valid:
+        await CertificateInspectorAgent.flag_forgery_and_notify_admin(
+            db=db,
+            student=current_user,
+            certificate_title=course["title"],
+            verification_url=data.verification_url,
+            detection_reason=flaw_reason
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Fake certificate detected! Verification URL must be a valid, secure certificate verification link from academy.uipath.com or credentials.uipath.com."
+            detail=f"Certificate Rejected: {flaw_reason}. An official integrity alert has been recorded on your profile and dispatched to the platform administrator."
         )
 
     try:
@@ -260,6 +268,25 @@ async def submit_general_certificate(
         parsed_date = datetime.strptime(payload.issue_date, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Expected YYYY-MM-DD.")
+
+    # Deep Inspection with CertificateInspectorAgent
+    is_valid, flaw_reason, _ = await CertificateInspectorAgent.inspect_credential(
+        title=payload.title,
+        issuer=payload.issuer,
+        verification_url=payload.verification_url
+    )
+    if not is_valid:
+        await CertificateInspectorAgent.flag_forgery_and_notify_admin(
+            db=db,
+            student=current_user,
+            certificate_title=payload.title,
+            verification_url=payload.verification_url or "None",
+            detection_reason=flaw_reason
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Certificate Rejected: {flaw_reason}. An official integrity alert has been recorded on your profile and dispatched to the platform administrator."
+        )
         
     cert = Certificate(
         user_id=current_user.id,

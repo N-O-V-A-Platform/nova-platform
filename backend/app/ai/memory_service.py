@@ -246,3 +246,6 @@ class MemoryService:
         """Clear session cache for a conversation (e.g., on new message)."""
         r = await self._get_redis()
         await r.delete(f"nova:session:{conversation_id}")
+
+# Singleton instance
+memory_service = MemoryService()
