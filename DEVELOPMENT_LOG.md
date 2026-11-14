@@ -84,3 +84,5 @@ nova-platform/
 ├── SYSTEM_DESIGN.md                                      <-- Technical interview & viva defense guide
 └── DEVELOPMENT_LOG.md                                    <-- This file (build and decision history)
 ```
+
+- **Google OAuth UI Polish**: Updated `GoogleAuthButton.tsx` so that when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is unset (local dev mode), it gracefully hides itself instead of showing an intrusive red error banner.

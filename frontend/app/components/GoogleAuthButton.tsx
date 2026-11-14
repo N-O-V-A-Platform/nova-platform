@@ -44,12 +44,11 @@ export default function GoogleAuthButton() {
   const initializedRef = useRef(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const configError = GOOGLE_CLIENT_ID ? "" : "Google Sign-In is not configured.";
 
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) {
-      return;
-    }
+  // If no Google Client ID is configured in the environment, don't show an intrusive red banner
+  if (!GOOGLE_CLIENT_ID) {
+    return null;
+  }
 
     const initializeGoogleSignIn = () => {
       if (!window.google || !buttonRef.current || initializedRef.current) {
@@ -121,9 +120,9 @@ export default function GoogleAuthButton() {
         ref={buttonRef}
         className={`flex min-h-11 w-full justify-center ${loading ? "pointer-events-none opacity-60" : ""}`}
       />
-      {(error || configError) && (
+      {error && (
         <div className="rounded border-2 border-red-500 bg-red-50 p-2.5 text-center font-casual text-sm text-red-700 dark:bg-red-950/20 dark:text-red-400">
-          {error || configError}
+          {error}
         </div>
       )}
     </div>
