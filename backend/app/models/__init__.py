@@ -1,5 +1,6 @@
 from app.models.ai import AIConversation, Escalation, Question
 from app.models.ai_teacher import LearningSession, LessonPlan, LessonSection, TeachingInteraction, Misconception
+from app.models.knowledge_graph import CourseConcept, ConceptDependency, StudentKnowledgeState
 from app.models.analytics import AuditLog
 from app.models.classroom import AttendanceRecord, LiveMessage, LiveSession, TeachingReport
 from app.models.course import Course, Enrollment
@@ -19,7 +20,9 @@ __all__ = [
     "AuditLog",
     "Badge",
     "Certificate",
+    "ConceptDependency",
     "Course",
+    "CourseConcept",
     "Department",
     "Enrollment",
     "Escalation",
@@ -43,6 +46,7 @@ __all__ = [
     "Role",
     "ScrapedSource",
     "SkillPassport",
+    "StudentKnowledgeState",
     "TeachingInteraction",
     "TeachingReport",
     "User",

@@ -19,6 +19,8 @@ from app.schemas.ai_teacher import (
 from app.ai.teacher_agent import AITeacherAgent
 from app.ai.tts_avatar_service import TTSAvatarService
 from app.ai.rag_service import RAGService
+from app.ai.knowledge_graph_service import KnowledgeGraphService
+from app.models.knowledge_graph import CourseConcept
 
 router = APIRouter(prefix="/ai-teacher", tags=["AI Teacher"])
 
@@ -293,6 +295,28 @@ async def submit_student_response(
             resolved=False
         )
         db.add(misc)
+
+    # Synchronize Knowledge Graph if session is bound to a course
+    if session.course_id:
+        try:
+            # Find or auto-match concept node
+            concept_res = await db.execute(
+                select(CourseConcept).where(
+                    CourseConcept.course_id == session.course_id,
+                    CourseConcept.name.ilike(f"%{section_title[:20]}%")
+                )
+            )
+            matched_concept = concept_res.scalars().first()
+            if matched_concept:
+                await KnowledgeGraphService.record_evaluation_outcome(
+                    db=db,
+                    student_id=current_user.id,
+                    concept_id=matched_concept.id,
+                    is_correct=is_correct,
+                    misconception_text=eval_result.get("misconception_title") or eval_result.get("misconception_explanation"),
+                )
+        except Exception as kg_err:
+            print(f"[AITeacher] Knowledge graph sync warning: {kg_err}")
 
     # Synthesize Audio for remedy/feedback script
     tts_result = await tts_avatar_service.generate_speech_audio(

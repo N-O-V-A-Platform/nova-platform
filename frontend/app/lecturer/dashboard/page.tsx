@@ -155,7 +155,10 @@ export default function LecturerDashboard() {
             >
               Course Materials
             </button>
-            <button className="flex-shrink-0 px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-2 border-transparent hover:border-black dark:hover:border-white rounded-md transition-all text-xs md:text-base md:py-2 md:w-full md:text-left">
+            <button 
+              onClick={() => router.push("/lecturer/analytics")}
+              className="flex-shrink-0 px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 border-2 border-transparent hover:border-black dark:hover:border-white rounded-md transition-all text-xs md:text-base md:py-2 md:w-full md:text-left"
+            >
               Class Analytics
             </button>
           </nav>

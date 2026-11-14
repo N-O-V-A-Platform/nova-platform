@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth";
+import SVGBlackboard from "@/app/components/SVGBlackboard";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
@@ -291,81 +292,7 @@ export default function AITeacherStudio() {
 
   // Helper to render dynamic interactive SVG visuals
   const renderVisualCanvas = (visualSpec: any) => {
-    if (!visualSpec || !visualSpec.nodes) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 bg-zinc-50 dark:bg-zinc-900/40 rounded-xl border-2 border-black p-6 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <div className="w-16 h-16 rounded-full bg-[#E75A3D]/10 flex items-center justify-center mb-3 border-2 border-[#E75A3D]">
-            <svg className="w-8 h-8 text-[#E75A3D]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h4 className="text-black dark:text-zinc-300 font-bold font-handwriting text-lg">Dynamic Visual Canvas</h4>
-          <p className="text-zinc-600 dark:text-zinc-400 text-xs mt-1 font-casual">Interactive diagrams & analogies will be generated here by the AI Teacher.</p>
-        </div>
-      );
-    }
-
-    const nodes = visualSpec.nodes || [];
-    const title = visualSpec.title || "Visual Concept Diagram";
-    const caption = visualSpec.caption || "";
-    const isAnalogy = visualSpec.type === "analogy_pipe" || visualSpec.type === "analogy";
-
-    return (
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border-2 border-black p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
-        <div className="flex items-center justify-between mb-4 border-b-2 border-black pb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#E75A3D] animate-ping" />
-            <h4 className="font-bold text-sm font-handwriting text-black dark:text-white tracking-wide">{title}</h4>
-          </div>
-          <span className="text-xs px-2.5 py-0.5 rounded bg-[#FEF08A] text-black font-bold border border-black font-casual">
-            {isAnalogy ? "PEDAGOGICAL ANALOGY" : "DYNAMIC DIAGRAM"}
-          </span>
-        </div>
-
-        {/* Interactive Nodes Flow */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6 relative">
-          {nodes.map((node: any, idx: number) => (
-            <div
-              key={node.id || idx}
-              className="bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 border-2 border-black rounded-xl p-4 transition-all duration-300 transform hover:-translate-y-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] relative group"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white shadow border border-black"
-                  style={{ backgroundColor: node.color || "#E75A3D" }}
-                >
-                  {idx + 1}
-                </div>
-                <div>
-                  <h5 className="font-bold text-sm text-black dark:text-white group-hover:text-[#E75A3D] transition-colors font-handwriting">
-                    {node.label}
-                  </h5>
-                  <p className="text-xs text-zinc-500 font-mono">
-                    {node.id || `node_${idx}`}
-                  </p>
-                </div>
-              </div>
-              {idx < nodes.length - 1 && (
-                <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10">
-                  <svg className="w-6 h-6 text-[#E75A3D] animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {caption && (
-          <div className="bg-[#FEF08A]/40 dark:bg-zinc-950 border-2 border-black rounded-lg p-3 text-xs text-black dark:text-zinc-200 flex items-start gap-2 font-casual">
-            <svg className="w-4 h-4 text-[#E75A3D] shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{caption}</span>
-          </div>
-        )}
-      </div>
-    );
+    return <SVGBlackboard visual_spec={visualSpec} />;
   };
 
   return (
